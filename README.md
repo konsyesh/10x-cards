@@ -4,7 +4,7 @@
 
 [![Build](https://img.shields.io/badge/build-GitHub%20Actions-informational.svg)](#)
 [![Status](https://img.shields.io/badge/status-MVP%20in%20development-blue.svg)](#)
-[![License](https://img.shields.io/badge/license-TBD-lightgrey.svg)](#license)
+[![License](https://img.shields.io/badge/license-MIT-lightgrey.svg)](#license)
 
 ---
 

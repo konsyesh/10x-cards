@@ -39,7 +39,7 @@ export interface CreateFlashcardItemCommand {
   /** Strona odpowiedzi/opisowa karty (1-500 znaków) */
   back: string;
   /** Źródło karty */
-  source: "manual" | "ai-full" | "ai-edited";
+  source: FlashcardSource;
   /** ID sesji generowania, jeśli karta pochodzi z AI */
   generation_id?: number | null;
 }

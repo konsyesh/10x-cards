@@ -77,11 +77,6 @@ export class GenerationService {
   async createGeneration(command: CreateGenerationCommand): Promise<GenerationResponseDTO> {
     const { source_text, model } = command;
 
-    // Walidacja długości tekstu (guard clause)
-    if (source_text.length < 1000 || source_text.length > 50000) {
-      throw new Error("TEXT_LENGTH_INVALID");
-    }
-
     // Obliczenie hash i długości tekstu
     const sourceTextHash = this.calculateSourceTextHash(source_text);
     const sourceTextLength = source_text.length;
@@ -104,6 +99,7 @@ export class GenerationService {
       .single();
 
     if (createError || !generationRecord) {
+      // eslint-disable-next-line no-console
       console.error("[Generation Service] Database error on create:", createError);
       throw new Error("GENERATION_CREATE_FAILED");
     }
@@ -120,6 +116,7 @@ export class GenerationService {
         const backValid = card.back.length >= 1 && card.back.length <= 500;
 
         if (!frontValid || !backValid) {
+          // eslint-disable-next-line no-console
           console.warn("[Generation Service] Invalid flashcard filtered out:", card);
         }
 
@@ -140,6 +137,7 @@ export class GenerationService {
         .eq("id", generationId);
 
       if (updateError) {
+        // eslint-disable-next-line no-console
         console.error("[Generation Service] Database error on update:", updateError);
         throw new Error("GENERATION_UPDATE_FAILED");
       }

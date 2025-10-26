@@ -2,9 +2,20 @@ import type { AstroGlobal } from "astro";
 import { supabaseClient, DEFAULT_USER_ID } from "../../db/supabase.client";
 import { validateGenerationCommand } from "../../lib/validators/generation.validator";
 import { GenerationService } from "../../lib/services/generation.service";
-import type { ApiErrorResponse, ApiSuccessResponse } from "../../types";
+
+import { successResponse, type FieldError } from "../../lib/http/http.responses";
+import {
+  rateLimitExceeded,
+  badJson,
+  validationFailed,
+  serviceUnavailable,
+  llmUnavailable,
+  llmTimeout,
+  internalError,
+} from "../../lib/http/http.errors";
 
 export const prerender = false;
+
 /**
  * In-memory rate limiter: przechowuje informacje o liczbie żądań per user_id
  * Struktura: Map<userId, { count: number; resetAt: Date }>
@@ -50,47 +61,6 @@ function checkRateLimit(userId: string): boolean {
 }
 
 /**
- * Zwraca zunifikowaną odpowiedź błędu API
- */
-function createErrorResponse(
-  code: string,
-  message: string,
-  statusCode: number,
-  details?: { field: string; message: string }[]
-): { status: number; body: ApiErrorResponse } {
-  return {
-    status: statusCode,
-    body: {
-      error: {
-        code,
-        message,
-        details,
-      },
-      meta: {
-        timestamp: new Date().toISOString(),
-        status: "error",
-      },
-    },
-  };
-}
-
-/**
- * Zwraca zunifikowaną odpowiedź sukcesu API
- */
-function createSuccessResponse<T>(data: T, statusCode = 200): { status: number; body: ApiSuccessResponse<T> } {
-  return {
-    status: statusCode,
-    body: {
-      data,
-      meta: {
-        timestamp: new Date().toISOString(),
-        status: "success",
-      },
-    },
-  };
-}
-
-/**
  * POST /api/generations
  *
  * Tworzy nową sesję generowania flashcard'ów z tekstu źródłowego
@@ -128,11 +98,11 @@ export const POST = async (context: AstroGlobal) => {
   // TODO: Na etapie wdrażania middleware JWT będzie weryfikować token
   // Dla teraz używamy DEFAULT_USER_ID
   const userId = DEFAULT_USER_ID;
+  const instance = context.url.pathname; // np. "/api/generations"
 
   // Krok 1: Rate limiting check
   if (!checkRateLimit(userId)) {
-    const response = createErrorResponse("RATE_LIMIT_EXCEEDED", "Przekroczono limit żądań. Limit: 5 na minutę.", 429);
-    return new Response(JSON.stringify(response.body), { status: response.status });
+    return rateLimitExceeded(instance);
   }
 
   // Krok 2: Parsowanie JSON body
@@ -141,21 +111,14 @@ export const POST = async (context: AstroGlobal) => {
   try {
     bodyData = await context.request.json();
   } catch {
-    const response = createErrorResponse("VALIDATION_ERROR", "Niepoprawny format JSON w body żądania", 400);
-    return new Response(JSON.stringify(response.body), { status: response.status });
+    return badJson(instance);
   }
 
   // Krok 3: Walidacja danych za pomocą Zod
   const validationResult = validateGenerationCommand(bodyData);
 
   if (!validationResult.success || !validationResult.data) {
-    const response = createErrorResponse(
-      "VALIDATION_ERROR",
-      "Walidacja parametrów nie powiodła się",
-      400,
-      validationResult.errors
-    );
-    return new Response(JSON.stringify(response.body), { status: response.status });
+    return validationFailed(validationResult.errors as FieldError[] | undefined, instance);
   }
 
   // Krok 4: Tworzenie serwisu generowania i przetwarzanie żądania
@@ -165,11 +128,7 @@ export const POST = async (context: AstroGlobal) => {
     const generationResponse = await generationService.createGeneration(validationResult.data);
 
     // Krok 5: Zwrócenie sukcesu (201 Created)
-    const response = createSuccessResponse(generationResponse, 201);
-    return new Response(JSON.stringify(response.body), {
-      status: response.status,
-      headers: { "Content-Type": "application/json" },
-    });
+    return successResponse(generationResponse, 201);
   } catch (error) {
     // Obsługa błędów z serwisu generowania
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
@@ -182,48 +141,19 @@ export const POST = async (context: AstroGlobal) => {
     });
 
     // Mapowanie błędów na odpowiednie kody HTTP
-    if (errorMessage === "TEXT_LENGTH_INVALID") {
-      const response = createErrorResponse(
-        "TEXT_LENGTH_INVALID",
-        "Tekst źródłowy musi zawierać od 1000 do 50000 znaków",
-        400
-      );
-      return new Response(JSON.stringify(response.body), { status: response.status });
-    }
-
     if (errorMessage === "GENERATION_CREATE_FAILED" || errorMessage === "GENERATION_UPDATE_FAILED") {
-      const response = createErrorResponse(
-        "SERVICE_UNAVAILABLE",
-        "Usługa jest tymczasowo niedostępna. Spróbuj ponownie później.",
-        503
-      );
-      return new Response(JSON.stringify(response.body), { status: response.status });
+      return serviceUnavailable(instance); // 503
     }
 
     if (errorMessage === "LLM_SERVICE_UNAVAILABLE") {
-      const response = createErrorResponse(
-        "SERVICE_UNAVAILABLE",
-        "Usługa LLM jest tymczasowo niedostępna. Spróbuj ponownie później.",
-        503
-      );
-      return new Response(JSON.stringify(response.body), { status: response.status });
+      return llmUnavailable(instance); // 503
     }
 
     if (errorMessage === "LLM_GENERATION_FAILED" || errorMessage === "LLM_TIMEOUT") {
-      const response = createErrorResponse(
-        "GATEWAY_TIMEOUT",
-        "Żądanie do usługi LLM przekroczyło limit czasu. Spróbuj z krótszym tekstem.",
-        504
-      );
-      return new Response(JSON.stringify(response.body), { status: response.status });
+      return llmTimeout(instance); // 504
     }
 
     // Ogólny błąd serwera
-    const response = createErrorResponse(
-      "INTERNAL_SERVER_ERROR",
-      "Podczas przetwarzania żądania wystąpił nieoczekiwany błąd.",
-      500
-    );
-    return new Response(JSON.stringify(response.body), { status: response.status });
+    return internalError(instance); // 500
   }
 };

@@ -2,7 +2,10 @@ import type { AstroGlobal } from "astro";
 import { supabaseClient, DEFAULT_USER_ID } from "../../db/supabase.client";
 import { validateCreateFlashcardsCommand } from "../../lib/validators/flashcards.validator";
 import { FlashcardService } from "../../lib/services/flashcard.service";
-import type { ApiErrorResponse, ApiSuccessResponse, CreateFlashcardsResponseDTO } from "../../types";
+
+import { successResponse, type FieldError } from "../../lib/http/http.responses";
+import { badJson, validationFailed, notFound, serviceUnavailable, internalError } from "../../lib/http/http.errors";
+
 import {
   GenerationNotFoundError,
   CollectionNotFoundError,
@@ -11,47 +14,6 @@ import {
 } from "../../lib/errors/flashcard.errors";
 
 export const prerender = false;
-
-/**
- * Zwraca zunifikowaną odpowiedź błędu API
- */
-function createErrorResponse(
-  code: string,
-  message: string,
-  statusCode: number,
-  details?: { field: string; message: string }[]
-): { status: number; body: ApiErrorResponse } {
-  return {
-    status: statusCode,
-    body: {
-      error: {
-        code,
-        message,
-        details,
-      },
-      meta: {
-        timestamp: new Date().toISOString(),
-        status: "error",
-      },
-    },
-  };
-}
-
-/**
- * Zwraca zunifikowaną odpowiedź sukcesu API
- */
-function createSuccessResponse<T>(data: T, statusCode = 200): { status: number; body: ApiSuccessResponse<T> } {
-  return {
-    status: statusCode,
-    body: {
-      data,
-      meta: {
-        timestamp: new Date().toISOString(),
-        status: "success",
-      },
-    },
-  };
-}
 
 /**
  * POST /api/flashcards
@@ -93,55 +55,57 @@ function createSuccessResponse<T>(data: T, statusCode = 200): { status: number; 
  * }
  */
 export const POST = async (context: AstroGlobal) => {
-  // MVP: Używamy DEFAULT_USER_ID, na etapie 2 będzie JWT middleware
+  // TODO: Na etapie wdrażania middleware JWT będzie weryfikować token
+  // Dla teraz używamy DEFAULT_USER_ID
   const userId = DEFAULT_USER_ID;
+  const instance = context.url.pathname; // np. "/api/flashcards"
 
-  // Krok 1: Parsowanie JSON body
+  // Krok 1: Parsowanie JSON body → 400 jeśli JSON niepoprawny
   let bodyData: unknown;
 
   try {
     bodyData = await context.request.json();
   } catch {
-    const response = createErrorResponse("VALIDATION_ERROR", "Niepoprawny format JSON w body żądania", 400);
-    return new Response(JSON.stringify(response.body), { status: response.status });
+    return badJson(instance);
   }
 
-  // Krok 2: Walidacja struktury za pomocą Zod
+  // Krok 2: Walidacja struktury za pomocą Zod → 422 przy błędach pól
   const validationResult = validateCreateFlashcardsCommand(bodyData);
 
   if (!validationResult.success) {
-    const response = createErrorResponse(
-      "VALIDATION_ERROR",
-      "Walidacja parametrów nie powiodła się",
-      400,
-      validationResult.errors
-    );
-    return new Response(JSON.stringify(response.body), { status: response.status });
+    return validationFailed(validationResult.errors as FieldError[] | undefined, instance);
+  }
+
+  // Gwarancja że .data istnieje, bo success === true
+  if (!validationResult.data) {
+    return internalError(instance);
   }
 
   // Krok 3: Tworzenie serwisu flashcard'ów i przetwarzanie żądania
   const flashcardService = new FlashcardService(supabaseClient, userId);
 
   try {
-    const savedFlashcards = await flashcardService.createFlashcards(validationResult.data);
+    // Normalizuj collection_id: undefined -> null
+    const commandData = {
+      ...validationResult.data,
+      collection_id: validationResult.data.collection_id ?? null,
+    };
+
+    const savedFlashcards = await flashcardService.createFlashcards(commandData);
 
     // Krok 4: Przygotowanie response'u
-    const responseData: CreateFlashcardsResponseDTO = {
+    const responseData = {
       saved_count: savedFlashcards.length,
       flashcards: savedFlashcards,
-      collection_id: validationResult.data?.collection_id ?? null,
+      collection_id: commandData.collection_id,
       message: `${savedFlashcards.length} flashcards successfully saved`,
     };
 
     // Krok 5: Zwrócenie sukcesu (201 Created)
-    const response = createSuccessResponse(responseData, 201);
-    return new Response(JSON.stringify(response.body), {
-      status: response.status,
-      headers: { "Content-Type": "application/json" },
-    });
-  } catch (error) {
+    return successResponse(responseData, 201);
+  } catch (err) {
     // Obsługa błędów z serwisu flashcard'ów
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
 
     // eslint-disable-next-line no-console
     console.error("[POST /api/flashcards]", {
@@ -150,33 +114,25 @@ export const POST = async (context: AstroGlobal) => {
       error: errorMessage,
     });
 
-    // Mapowanie custom errors na odpowiednie kody HTTP
-    if (error instanceof GenerationNotFoundError) {
-      const response = createErrorResponse("RESOURCE_NOT_FOUND", error.message, 404);
-      return new Response(JSON.stringify(response.body), { status: response.status });
+    // Mapowanie domenowych wyjątków na odpowiednie kody HTTP
+    if (err instanceof GenerationNotFoundError) {
+      return notFound(err.message, instance); // 404
     }
 
-    if (error instanceof CollectionNotFoundError) {
-      const response = createErrorResponse("RESOURCE_NOT_FOUND", error.message, 404);
-      return new Response(JSON.stringify(response.body), { status: response.status });
+    if (err instanceof CollectionNotFoundError) {
+      return notFound(err.message, instance); // 404
     }
 
-    if (error instanceof CollectionAccessError) {
-      const response = createErrorResponse("FORBIDDEN", error.message, 403);
-      return new Response(JSON.stringify(response.body), { status: response.status });
+    if (err instanceof CollectionAccessError) {
+      // Zwracamy 404 zamiast 403, żeby nie ujawniać istnienia cudzych kolekcji (security best practice)
+      return notFound(err.message, instance); // 404
     }
 
-    if (error instanceof SchedulerError) {
-      const response = createErrorResponse("SERVICE_UNAVAILABLE", error.message, 503);
-      return new Response(JSON.stringify(response.body), { status: response.status });
+    if (err instanceof SchedulerError) {
+      return serviceUnavailable(instance); // 503
     }
 
-    // Ogólny błąd serwera
-    const response = createErrorResponse(
-      "INTERNAL_SERVER_ERROR",
-      "Podczas przetwarzania żądania wystąpił nieoczekiwany błąd.",
-      500
-    );
-    return new Response(JSON.stringify(response.body), { status: response.status });
+    // Fallback → 500
+    return internalError(instance); // 500
   }
 };

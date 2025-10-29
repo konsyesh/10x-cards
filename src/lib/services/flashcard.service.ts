@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "../../db/supabase.client";
-import type { CreateFlashcardsCommand, FlashcardDTO } from "../../types";
+import type { CreateFlashcardsCommand, FlashcardDTO, CreateFlashcardItemCommand } from "../../types";
+import type { FlashcardRow } from "../../types";
 import { GenerationNotFoundError, CollectionNotFoundError, CollectionAccessError } from "../errors/flashcard.errors";
 
 /**
@@ -17,6 +18,9 @@ export class FlashcardService {
    * - Waliduje referencje do generations i collections
    * - Wykonuje batch insert
    * - Aktualizuje liczniki akceptacji w generations
+   *
+   * @param command - CreateFlashcardsCommand zawierająca tablicę kart i collection_id
+   * @returns Tablica zapisanych FlashcardDTO (przycięta, bezpieczna)
    */
   async createFlashcards(command: CreateFlashcardsCommand): Promise<FlashcardDTO[]> {
     // Guard: Jeśli generation_id podany, sprawdzić referencje
@@ -52,15 +56,16 @@ export class FlashcardService {
     // Warunkowa aktualizacja metryki generations (liczniki akceptacji)
     await this.updateGenerationMetrics(command.flashcards);
 
-    return savedFlashcards;
+    // Mapuj FlashcardRow[] na FlashcardDTO[]
+    return this.mapToFlashcardDTOs(savedFlashcards as FlashcardRow[]);
   }
 
   /**
    * Waliduje czy generations do których odwołują się fiszki należą do użytkownika
    */
-  private async validateGenerationReferences(flashcards: any[]): Promise<void> {
-    // Deduplikacja - tylko unikalne generation_id
-    const generationIds = [...new Set(flashcards.map((f) => f.generation_id).filter(Boolean))];
+  private async validateGenerationReferences(flashcards: CreateFlashcardItemCommand[]): Promise<void> {
+    // Deduplikacja - tylko unikalne generation_id (filter out null/undefined)
+    const generationIds = [...new Set(flashcards.map((f) => f.generation_id).filter((id): id is number => id != null))];
 
     if (generationIds.length === 0) return;
 
@@ -102,11 +107,27 @@ export class FlashcardService {
   }
 
   /**
+   * Mapuje FlashcardRow[] na FlashcardDTO[] (przycięte pola)
+   */
+  private mapToFlashcardDTOs(rows: FlashcardRow[]): FlashcardDTO[] {
+    return rows.map((row) => ({
+      id: row.id,
+      front: row.front,
+      back: row.back,
+      source: row.source,
+      generation_id: row.generation_id,
+      collection_id: row.collection_id,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    }));
+  }
+
+  /**
    * Aktualizuje liczniki akceptacji w generations
    * - `accepted_unedited_count` dla source='ai-full'
    * - `accepted_edited_count` dla source='ai-edited'
    */
-  private async updateGenerationMetrics(flashcards: any[]): Promise<void> {
+  private async updateGenerationMetrics(flashcards: CreateFlashcardItemCommand[]): Promise<void> {
     // Zgromadź liczniki per generation_id + source
     const updates: Record<string, { unedited: number; edited: number }> = {};
 
@@ -130,11 +151,15 @@ export class FlashcardService {
         const { error } = await this.supabase
           .from("generations")
           .update({
-            accepted_unedited_count: this.supabase.raw(`accepted_unedited_count + ${counts.unedited}`),
+            accepted_unedited_count: (this.supabase.rpc as unknown as CallableFunction)("increment", {
+              column: "accepted_unedited_count",
+              amount: counts.unedited,
+            }),
           })
-          .eq("id", parseInt(genId));
+          .eq("id", parseInt(genId, 10));
 
         if (error) {
+          // eslint-disable-next-line no-console
           console.error(`[FlashcardService] Error updating accepted_unedited_count for generation ${genId}:`, error);
         }
       }
@@ -143,11 +168,15 @@ export class FlashcardService {
         const { error } = await this.supabase
           .from("generations")
           .update({
-            accepted_edited_count: this.supabase.raw(`accepted_edited_count + ${counts.edited}`),
+            accepted_edited_count: (this.supabase.rpc as unknown as CallableFunction)("increment", {
+              column: "accepted_edited_count",
+              amount: counts.edited,
+            }),
           })
-          .eq("id", parseInt(genId));
+          .eq("id", parseInt(genId, 10));
 
         if (error) {
+          // eslint-disable-next-line no-console
           console.error(`[FlashcardService] Error updating accepted_edited_count for generation ${genId}:`, error);
         }
       }

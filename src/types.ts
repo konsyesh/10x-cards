@@ -2,29 +2,37 @@ import type { Tables, TablesInsert, TablesUpdate } from "./db/database.types";
 
 /**
  * ============================================================================
- * BASE DTOs - Bezpośrednie mapowania z typów bazy danych
+ * WARSTWA PERSISTENCE – Typy Bazy Danych (nigdy nie wysyłaj bezpośrednio!)
  * ============================================================================
  */
 
-/** Reprezentacja karty do nauki z bazy danych */
-export type FlashcardDTO = Tables<"flashcards">;
+/** Surowy rekord karty z bazy */
+export type FlashcardRow = Tables<"flashcards">;
 
-/** Reprezentacja sesji generowania kart z bazy danych */
-export type GenerationDTO = Tables<"generations">;
+/** Surowy rekord sesji generowania z bazy */
+export type GenerationRow = Tables<"generations">;
 
-/** Reprezentacja kolekcji z bazy danych */
-export type CollectionDTO = Tables<"collections">;
+/** Surowy rekord kolekcji z bazy */
+export type CollectionRow = Tables<"collections">;
 
-/** Reprezentacja błędu generowania z bazy danych */
-export type GenerationErrorLogDTO = Tables<"generation_error_logs">;
+/** Surowy rekord błędu generowania z bazy */
+export type GenerationErrorLogRow = Tables<"generation_error_logs">;
+
+/** Insert struktura dla flashcards */
+export type FlashcardInsertRow = TablesInsert<"flashcards">;
+
+/** Update struktura dla flashcards */
+export type FlashcardUpdateRow = TablesUpdate<"flashcards">;
 
 /**
  * ============================================================================
- * COMMAND MODELE - Struktury danych wysyłane do API
+ * WARSTWA WEJŚCIA – Commandy (Mutacje Stanu)
  * ============================================================================
  */
 
-/** Komenda do utworzenia sesji generowania flashcards przez AI */
+/**
+ * Komenda do utworzenia sesji generowania flashcards przez AI
+ */
 export interface CreateGenerationCommand {
   /** Tekst źródłowy do analizy (1000-50000 znaków) */
   source_text: string;
@@ -32,7 +40,9 @@ export interface CreateGenerationCommand {
   model: string;
 }
 
-/** Pojedynczy element karty do zapisania w operacji bulk */
+/**
+ * Pojedynczy element karty do zapisania w operacji create/bulk
+ */
 export interface CreateFlashcardItemCommand {
   /** Strona pytania/pytająca karty (1-200 znaków) */
   front: string;
@@ -44,7 +54,9 @@ export interface CreateFlashcardItemCommand {
   generation_id?: number | null;
 }
 
-/** Komenda do utworzenia lub bulk save flashcards */
+/**
+ * Komenda do utworzenia lub bulk save flashcards
+ */
 export interface CreateFlashcardsCommand {
   /** Tablica kart do zapisania */
   flashcards: CreateFlashcardItemCommand[];
@@ -52,7 +64,9 @@ export interface CreateFlashcardsCommand {
   collection_id: number | null;
 }
 
-/** Komenda do aktualizacji flashcard */
+/**
+ * Komenda do aktualizacji flashcard
+ */
 export interface UpdateFlashcardCommand {
   /** Aktualizowana strona pytania */
   front?: string;
@@ -62,13 +76,17 @@ export interface UpdateFlashcardCommand {
   collection_id?: number | null;
 }
 
-/** Komenda do utworzenia nowej kolekcji */
+/**
+ * Komenda do utworzenia nowej kolekcji
+ */
 export interface CreateCollectionCommand {
   /** Nazwa kolekcji (1-100 znaków) */
   name: string;
 }
 
-/** Komenda do aktualizacji kolekcji */
+/**
+ * Komenda do aktualizacji kolekcji
+ */
 export interface UpdateCollectionCommand {
   /** Nowa nazwa kolekcji (1-100 znaków) */
   name: string;
@@ -76,11 +94,43 @@ export interface UpdateCollectionCommand {
 
 /**
  * ============================================================================
- * RESPONSE DTOs - Struktury danych odbierane z API
+ * WARSTWA WYJŚCIA – DTOs (Kontrakt API – to wysyłamy do klienta)
  * ============================================================================
  */
 
-/** Podatne ośmiokoła danych dla operacji paginacji */
+/**
+ * Pojedynczy rekord flashcard'u w API response
+ * Przycięty, bezpieczny kształt (tylko publiczne pola)
+ */
+export type FlashcardDTO = Pick<
+  FlashcardRow,
+  "id" | "front" | "back" | "source" | "generation_id" | "collection_id" | "created_at" | "updated_at"
+>;
+
+/**
+ * Pojedynczy rekord generacji w API response
+ */
+export type GenerationDTO = Pick<
+  GenerationRow,
+  | "id"
+  | "user_id"
+  | "model"
+  | "source_text_length"
+  | "generated_count"
+  | "generation_duration_ms"
+  | "status"
+  | "created_at"
+  | "updated_at"
+>;
+
+/**
+ * Pojedynczy rekord kolekcji w API response
+ */
+export type CollectionDTO = Pick<CollectionRow, "id" | "user_id" | "name" | "created_at" | "updated_at">;
+
+/**
+ * Dane paginacji dla list response'ów
+ */
 export interface PaginationDTO {
   /** Numer strony */
   page: number;
@@ -92,10 +142,34 @@ export interface PaginationDTO {
   total_pages: number;
 }
 
-/** Wygenerowana kandydat karty z AI - bez metadanych DB */
+/**
+ * Wygenerowana kandydat karty z AI (bez metadanych DB)
+ */
 export type GeneratedFlashcardCandidateDTO = Pick<FlashcardDTO, "front" | "back" | "source">;
 
-/** Odpowiedź z sesji generowania - zawiera wygenerowane karty */
+/**
+ * ============================================================================
+ * RESPONSE DTOs – Pełne Kształty Odpowiedzi Endpointów
+ * ============================================================================
+ */
+
+/**
+ * Odpowiedź z operacji bulk save flashcards
+ */
+export interface CreateFlashcardsResponseDTO {
+  /** Liczba pomyślnie zapisanych kart */
+  saved_count: number;
+  /** Tablica zapisanych kart */
+  flashcards: FlashcardDTO[];
+  /** ID kolekcji do której zostały przypisane */
+  collection_id: number | null;
+  /** Komunikat potwierdzenia */
+  message: string;
+}
+
+/**
+ * Odpowiedź z operacji tworzenia sesji generowania
+ */
 export interface GenerationResponseDTO {
   /** ID utworzonej sesji generowania */
   generation_id: number;
@@ -113,41 +187,17 @@ export interface GenerationResponseDTO {
   message: string;
 }
 
-/** Odpowiedź listy sesji generowania */
-export interface GenerationsListResponseDTO {
-  /** Tablica sesji generowania */
-  generations: GenerationDTO[];
-  /** Informacje o paginacji */
-  pagination: PaginationDTO;
-}
-
-/** Odpowiedź listy flashcards */
-export interface FlashcardsListResponseDTO {
-  /** Tablica flashcards */
-  flashcards: FlashcardDTO[];
-  /** Informacje o paginacji */
-  pagination: PaginationDTO;
-}
-
-/** Odpowiedź z operacji bulk save flashcards */
-export interface CreateFlashcardsResponseDTO {
-  /** Liczba pomyślnie zapisanych kart */
-  saved_count: number;
-  /** Tablica zapisanych kart */
-  flashcards: FlashcardDTO[];
-  /** ID kolekcji do której zostały przypisane */
-  collection_id: number | null;
-  /** Komunikat potwierdzenia */
-  message: string;
-}
-
-/** Odpowiedź z aktualizacji flashcard */
+/**
+ * Odpowiedź z aktualizacji flashcard
+ */
 export type UpdateFlashcardResponseDTO = Pick<
   FlashcardDTO,
   "id" | "front" | "back" | "source" | "collection_id" | "updated_at"
 >;
 
-/** Uniwersalna odpowiedź dla operacji delete */
+/**
+ * Uniwersalna odpowiedź dla operacji delete
+ */
 export interface DeleteResponseDTO {
   /** ID usunięty zasobu */
   id: number;
@@ -155,7 +205,35 @@ export interface DeleteResponseDTO {
   message: string;
 }
 
-/** Kolekcja ze skojarzonymi flashcards */
+/**
+ * ============================================================================
+ * LIST RESPONSE DTOs – Listy z Paginacją
+ * ============================================================================
+ */
+
+/**
+ * Odpowiedź listy flashcards
+ */
+export interface FlashcardsListResponseDTO {
+  /** Tablica flashcards */
+  flashcards: FlashcardDTO[];
+  /** Informacje o paginacji */
+  pagination: PaginationDTO;
+}
+
+/**
+ * Odpowiedź listy sesji generowania
+ */
+export interface GenerationsListResponseDTO {
+  /** Tablica sesji generowania */
+  generations: GenerationDTO[];
+  /** Informacje o paginacji */
+  pagination: PaginationDTO;
+}
+
+/**
+ * Kolekcja ze skojarzonymi flashcards
+ */
 export interface CollectionWithFlashcardsDTO extends CollectionDTO {
   /** Tablica flashcards w kolekcji */
   flashcards: FlashcardDTO[];
@@ -163,7 +241,9 @@ export interface CollectionWithFlashcardsDTO extends CollectionDTO {
   pagination: PaginationDTO;
 }
 
-/** Lista kolekcji z paginacją */
+/**
+ * Lista kolekcji z paginacją
+ */
 export interface CollectionsListResponseDTO {
   /** Tablica kolekcji */
   collections: CollectionDTO[];
@@ -172,7 +252,13 @@ export interface CollectionsListResponseDTO {
 }
 
 /**
- * Metryki generowania - część analytics
+ * ============================================================================
+ * ANALYTICS DTOs – Metryki i Analityka
+ * ============================================================================
+ */
+
+/**
+ * Metryki generowania – część analytics
  */
 export interface GenerationMetricsDTO {
   /** Całkowita liczba sesji generowania */
@@ -186,7 +272,7 @@ export interface GenerationMetricsDTO {
 }
 
 /**
- * Metryki akceptacji - część analytics
+ * Metryki akceptacji – część analytics
  */
 export interface AcceptanceMetricsDTO {
   /** Całkowita liczba zaakceptowanych kandydatów */
@@ -202,7 +288,7 @@ export interface AcceptanceMetricsDTO {
 }
 
 /**
- * Metryki flashcards - część analytics
+ * Metryki flashcards – część analytics
  */
 export interface FlashcardMetricsDTO {
   /** Całkowita liczba flashcards użytkownika */
@@ -229,7 +315,9 @@ export interface PeriodDTO {
   end_date: string;
 }
 
-/** Pełne analytics - metryki wydajności użytkownika */
+/**
+ * Pełne analytics – metryki wydajności użytkownika
+ */
 export interface AnalyticsDTO {
   /** Informacje o okresie */
   period: PeriodDTO;
@@ -243,11 +331,13 @@ export interface AnalyticsDTO {
 
 /**
  * ============================================================================
- * UNIVERZALNE RESPONSE OBIEKTY
+ * UNIVERSAL RESPONSE OBJECTS – Envelope dla Success/Error
  * ============================================================================
  */
 
-/** Generyczna struktura sukcesu API */
+/**
+ * Generyczna struktura sukcesu API
+ */
 export interface ApiSuccessResponse<T = unknown> {
   /** Dane odpowiedzi */
   data: T;
@@ -260,7 +350,9 @@ export interface ApiSuccessResponse<T = unknown> {
   };
 }
 
-/** Szczegół błędu walidacji */
+/**
+ * Szczegół błędu walidacji
+ */
 export interface ValidationErrorDetail {
   /** Pole z błędem */
   field: string;
@@ -268,7 +360,9 @@ export interface ValidationErrorDetail {
   message: string;
 }
 
-/** Generyczna struktura błędu API */
+/**
+ * Generyczna struktura błędu API
+ */
 export interface ApiErrorResponse {
   /** Dane błędu */
   error: {
@@ -290,7 +384,7 @@ export interface ApiErrorResponse {
 
 /**
  * ============================================================================
- * HELPER TYPES - Typy pomocnicze
+ * HELPER TYPES – Typy Pomocnicze
  * ============================================================================
  */
 

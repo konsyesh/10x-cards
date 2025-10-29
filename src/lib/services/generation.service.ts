@@ -62,7 +62,7 @@ export class GenerationService {
    * Tworzy nową sesję generowania flashcard'ów
    * Przeprowadza pełny cykl: walidacja → tworzenie rekordu → generowanie → aktualizacja
    *
-   * @param command - Komenda zawierająca source_text i model
+   * @param command - CreateGenerationCommand zawierająca source_text i model
    * @returns Promise<GenerationResponseDTO> - Odpowiedź z wygenerowanymi kartami
    *
    * @throws Error jeśli operacje bazodanowe się nie powodzą
@@ -142,8 +142,8 @@ export class GenerationService {
         throw new Error("GENERATION_UPDATE_FAILED");
       }
 
-      // Krok 5: ZwrócenieResponse
-      return {
+      // Krok 5: Zwrócenie Response DTO
+      const response: GenerationResponseDTO = {
         generation_id: generationId,
         status: "completed",
         model,
@@ -152,6 +152,8 @@ export class GenerationService {
         flashcards_candidates: validatedFlashcards,
         message: `Wygenerowano ${validatedFlashcards.length} flashcard'ów.`,
       };
+
+      return response;
     } catch (error) {
       // Obsługa błędów LLM - zaloguj do tabeli i aktualizuj status generowania
       const generationDurationMs = Date.now() - startTime;

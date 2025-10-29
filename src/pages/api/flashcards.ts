@@ -1,5 +1,5 @@
-import type { AstroGlobal } from "astro";
-import { supabaseClient, DEFAULT_USER_ID } from "../../db/supabase.client";
+import type { APIRoute } from "astro";
+import { DEFAULT_USER_ID } from "../../db/supabase.client";
 import { validateCreateFlashcardsCommand } from "../../lib/validators/flashcards.validator";
 import { FlashcardService } from "../../lib/services/flashcard.service";
 
@@ -12,6 +12,8 @@ import {
   CollectionAccessError,
   SchedulerError,
 } from "../../lib/errors/flashcard.errors";
+
+import type { CreateFlashcardsResponseDTO } from "../../types";
 
 export const prerender = false;
 
@@ -54,17 +56,17 @@ export const prerender = false;
  *   "meta": { "timestamp": "...", "status": "success" }
  * }
  */
-export const POST = async (context: AstroGlobal) => {
+export const POST: APIRoute = async ({ url, request, locals }) => {
   // TODO: Na etapie wdrażania middleware JWT będzie weryfikować token
   // Dla teraz używamy DEFAULT_USER_ID
   const userId = DEFAULT_USER_ID;
-  const instance = context.url.pathname; // np. "/api/flashcards"
+  const instance = url.pathname; // np. "/api/flashcards"
 
   // Krok 1: Parsowanie JSON body → 400 jeśli JSON niepoprawny
   let bodyData: unknown;
 
   try {
-    bodyData = await context.request.json();
+    bodyData = await request.json();
   } catch {
     return badJson(instance);
   }
@@ -82,7 +84,7 @@ export const POST = async (context: AstroGlobal) => {
   }
 
   // Krok 3: Tworzenie serwisu flashcard'ów i przetwarzanie żądania
-  const flashcardService = new FlashcardService(supabaseClient, userId);
+  const flashcardService = new FlashcardService(locals.supabase, userId);
 
   try {
     // Normalizuj collection_id: undefined -> null
@@ -93,8 +95,8 @@ export const POST = async (context: AstroGlobal) => {
 
     const savedFlashcards = await flashcardService.createFlashcards(commandData);
 
-    // Krok 4: Przygotowanie response'u
-    const responseData = {
+    // Krok 4: Przygotowanie response DTO (typowany)
+    const responseData: CreateFlashcardsResponseDTO = {
       saved_count: savedFlashcards.length,
       flashcards: savedFlashcards,
       collection_id: commandData.collection_id,

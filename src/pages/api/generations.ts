@@ -1,5 +1,5 @@
-import type { AstroGlobal } from "astro";
-import { supabaseClient, DEFAULT_USER_ID } from "../../db/supabase.client";
+import type { APIRoute } from "astro";
+import { DEFAULT_USER_ID } from "../../db/supabase.client";
 import { validateGenerationCommand } from "../../lib/validators/generation.validator";
 import { GenerationService } from "../../lib/services/generation.service";
 
@@ -94,11 +94,11 @@ function checkRateLimit(userId: string): boolean {
  *   "meta": { "timestamp": "...", "status": "success" }
  * }
  */
-export const POST = async (context: AstroGlobal) => {
+export const POST: APIRoute = async ({ url, request, locals }) => {
   // TODO: Na etapie wdrażania middleware JWT będzie weryfikować token
   // Dla teraz używamy DEFAULT_USER_ID
   const userId = DEFAULT_USER_ID;
-  const instance = context.url.pathname; // np. "/api/generations"
+  const instance = url.pathname; // np. "/api/generations"
 
   // Krok 1: Rate limiting check
   if (!checkRateLimit(userId)) {
@@ -109,7 +109,7 @@ export const POST = async (context: AstroGlobal) => {
   let bodyData: unknown;
 
   try {
-    bodyData = await context.request.json();
+    bodyData = await request.json();
   } catch {
     return badJson(instance);
   }
@@ -122,7 +122,7 @@ export const POST = async (context: AstroGlobal) => {
   }
 
   // Krok 4: Tworzenie serwisu generowania i przetwarzanie żądania
-  const generationService = new GenerationService(supabaseClient, userId);
+  const generationService = new GenerationService(locals.supabase, userId);
 
   try {
     const generationResponse = await generationService.createGeneration(validationResult.data);

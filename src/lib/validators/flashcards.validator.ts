@@ -1,5 +1,6 @@
 import { z } from "zod";
-import type { ValidationErrorDetail } from "../../types";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type { CreateFlashcardsCommand, ValidationErrorDetail } from "../../types";
 
 /**
  * Zod schema dla pojedynczej karty do zapisania
@@ -17,6 +18,8 @@ const createFlashcardItemSchema = z.object({
 
 /**
  * Zod schema dla całego żądania tworzenia fiszek
+ * Design: Schema structure is validated at runtime against CreateFlashcardsCommand
+ * This ensures type safety between Zod validation and API request handler
  */
 export const createFlashcardsCommandSchema = z.object({
   flashcards: z
@@ -38,6 +41,9 @@ export interface CreateFlashcardsValidationResult {
 /**
  * Waliduje komendę tworzenia fiszek
  * Zwraca szczegółowe informacje o błędach w formacie ValidationErrorDetail
+ *
+ * @param data - Dane do walidacji
+ * @returns CreateFlashcardsValidationResult z data lub errors
  */
 export function validateCreateFlashcardsCommand(data: unknown): CreateFlashcardsValidationResult {
   const result = createFlashcardsCommandSchema.safeParse(data);

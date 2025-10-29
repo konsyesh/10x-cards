@@ -1,20 +1,47 @@
 import type { APIRoute } from "astro";
+import { z } from "zod";
 import { DEFAULT_USER_ID } from "../../db/supabase.client";
-import { validateGenerationCommand } from "../../lib/validators/generation.validator";
 import { GenerationService } from "../../lib/services/generation.service";
-
-import { successResponse, type FieldError } from "../../lib/http/http.responses";
+import { validateBody } from "../../lib/http/http.validate-body";
+import { successResponse } from "../../lib/http/http.responses";
 import {
   rateLimitExceeded,
-  badJson,
-  validationFailed,
   serviceUnavailable,
   llmUnavailable,
   llmTimeout,
   internalError,
 } from "../../lib/http/http.errors";
+import type { CreateGenerationCommand } from "@/types";
 
 export const prerender = false;
+
+/**
+ * Supported LLM models whitelist
+ */
+const SUPPORTED_MODELS = ["gpt-4o-mini"] as const;
+
+/**
+ * Zod schema do walidacji komendy tworzenia sesji generowania
+ * Sprawdza:
+ * - source_text: 1000-50000 znaków, wymagane, string
+ * - model: z whitelist obsługiwanych modeli
+ */
+const createGenerationCommandSchema = z.object({
+  source_text: z
+    .string()
+    .min(1000, "Tekst źródłowy musi zawierać co najmniej 1000 znaków")
+    .max(50000, "Tekst źródłowy nie może przekraczać 50000 znaków")
+    .describe("Tekst źródłowy do analizy (1000-50000 znaków)"),
+
+  model: z
+    .enum(SUPPORTED_MODELS, {
+      errorMap: () => ({
+        message: `Obsługiwany model to: ${SUPPORTED_MODELS.join(", ")}`,
+      }),
+    })
+    .default("gpt-4o-mini")
+    .describe("Model LLM do użycia w generowaniu"),
+});
 
 /**
  * In-memory rate limiter: przechowuje informacje o liczbie żądań per user_id
@@ -105,29 +132,19 @@ export const POST: APIRoute = async ({ url, request, locals }) => {
     return rateLimitExceeded(instance);
   }
 
-  // Krok 2: Parsowanie JSON body
-  let bodyData: unknown;
-
-  try {
-    bodyData = await request.json();
-  } catch {
-    return badJson(instance);
+  // Krok 2: Walidacja JSON body + schema
+  const validation = await validateBody(request, createGenerationCommandSchema, instance);
+  if (!validation.success) {
+    return validation.response as Response;
   }
 
-  // Krok 3: Walidacja danych za pomocą Zod
-  const validationResult = validateGenerationCommand(bodyData);
-
-  if (!validationResult.success || !validationResult.data) {
-    return validationFailed(validationResult.errors as FieldError[] | undefined, instance);
-  }
-
-  // Krok 4: Tworzenie serwisu generowania i przetwarzanie żądania
+  // Krok 3: Tworzenie serwisu generowania i przetwarzanie żądania
   const generationService = new GenerationService(locals.supabase, userId);
 
   try {
-    const generationResponse = await generationService.createGeneration(validationResult.data);
+    const generationResponse = await generationService.createGeneration(validation.data as CreateGenerationCommand);
 
-    // Krok 5: Zwrócenie sukcesu (201 Created)
+    // Krok 4: Zwrócenie sukcesu (201 Created)
     return successResponse(generationResponse, 201);
   } catch (error) {
     // Obsługa błędów z serwisu generowania

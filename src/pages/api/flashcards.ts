@@ -1,10 +1,10 @@
 import type { APIRoute } from "astro";
+import { z } from "zod";
 import { DEFAULT_USER_ID } from "../../db/supabase.client";
-import { validateCreateFlashcardsCommand } from "../../lib/validators/flashcards.validator";
 import { FlashcardService } from "../../lib/services/flashcard.service";
-
-import { successResponse, type FieldError } from "../../lib/http/http.responses";
-import { badJson, validationFailed, notFound, serviceUnavailable, internalError } from "../../lib/http/http.errors";
+import { validateBody } from "../../lib/http/http.validate-body";
+import { successResponse } from "../../lib/http/http.responses";
+import { notFound, serviceUnavailable, internalError } from "../../lib/http/http.errors";
 
 import {
   GenerationNotFoundError,
@@ -13,9 +13,35 @@ import {
   SchedulerError,
 } from "../../lib/errors/flashcard.errors";
 
-import type { CreateFlashcardsResponseDTO } from "../../types";
+import type { CreateFlashcardsCommand, CreateFlashcardsResponseDTO } from "../../types";
 
 export const prerender = false;
+
+/**
+ * Zod schema dla pojedynczej karty do zapisania
+ */
+const createFlashcardItemSchema = z.object({
+  front: z.string().min(1, "front must have at least 1 character").max(200, "front must not exceed 200 characters"),
+  back: z.string().min(1, "back must have at least 1 character").max(500, "back must not exceed 500 characters"),
+  source: z.enum(["manual", "ai-full", "ai-edited"], {
+    errorMap: () => ({
+      message: "source must be one of: manual, ai-full, ai-edited",
+    }),
+  }),
+  generation_id: z.number().int().positive().optional().nullable(),
+});
+
+/**
+ * Zod schema dla całego żądania tworzenia fiszek
+ * Bezpośrednio odbiera strukturę z frontendu
+ */
+const createFlashcardsCommandSchema = z.object({
+  flashcards: z
+    .array(createFlashcardItemSchema)
+    .min(1, "flashcards array must have at least 1 item")
+    .max(100, "flashcards array exceeds maximum size of 100 items"),
+  collection_id: z.number().int().positive().optional().nullable(),
+});
 
 /**
  * POST /api/flashcards
@@ -62,40 +88,25 @@ export const POST: APIRoute = async ({ url, request, locals }) => {
   const userId = DEFAULT_USER_ID;
   const instance = url.pathname; // np. "/api/flashcards"
 
-  // Krok 1: Parsowanie JSON body → 400 jeśli JSON niepoprawny
-  let bodyData: unknown;
-
-  try {
-    bodyData = await request.json();
-  } catch {
-    return badJson(instance);
+  // Krok 1: Walidacja JSON body + schema
+  const validation = await validateBody(request, createFlashcardsCommandSchema, instance);
+  if (!validation.success) {
+    return validation.response as Response;
   }
 
-  // Krok 2: Walidacja struktury za pomocą Zod → 422 przy błędach pól
-  const validationResult = validateCreateFlashcardsCommand(bodyData);
-
-  if (!validationResult.success) {
-    return validationFailed(validationResult.errors as FieldError[] | undefined, instance);
-  }
-
-  // Gwarancja że .data istnieje, bo success === true
-  if (!validationResult.data) {
-    return internalError(instance);
-  }
-
-  // Krok 3: Tworzenie serwisu flashcard'ów i przetwarzanie żądania
+  // Krok 2: Tworzenie serwisu flashcard'ów i przetwarzanie żądania
   const flashcardService = new FlashcardService(locals.supabase, userId);
 
   try {
     // Normalizuj collection_id: undefined -> null
-    const commandData = {
-      ...validationResult.data,
-      collection_id: validationResult.data.collection_id ?? null,
+    const commandData: CreateFlashcardsCommand = {
+      ...(validation.data as CreateFlashcardsCommand),
+      collection_id: (validation.data as CreateFlashcardsCommand).collection_id ?? null,
     };
 
     const savedFlashcards = await flashcardService.createFlashcards(commandData);
 
-    // Krok 4: Przygotowanie response DTO (typowany)
+    // Krok 3: Przygotowanie response DTO (typowany)
     const responseData: CreateFlashcardsResponseDTO = {
       saved_count: savedFlashcards.length,
       flashcards: savedFlashcards,
@@ -103,7 +114,7 @@ export const POST: APIRoute = async ({ url, request, locals }) => {
       message: `${savedFlashcards.length} flashcards successfully saved`,
     };
 
-    // Krok 5: Zwrócenie sukcesu (201 Created)
+    // Krok 4: Zwrócenie sukcesu (201 Created)
     return successResponse(responseData, 201);
   } catch (err) {
     // Obsługa błędów z serwisu flashcard'ów

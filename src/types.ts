@@ -408,3 +408,58 @@ export type ApiErrorCode =
   | "RATE_LIMIT_EXCEEDED"
   | "SERVICE_UNAVAILABLE"
   | "GATEWAY_TIMEOUT";
+
+/**
+ * ============================================================================
+ * FRONTEND VIEWMODELS – Typy dla komponenty React widoku Generate
+ * ============================================================================
+ */
+
+/** Decyzja użytkownika na temat kandydata */
+export type CandidateDecision = "pending" | "accepted" | "rejected" | "edited";
+
+/** ViewModel pojedynczego kandydata karty */
+export interface CandidateVM {
+  /** Klucz lokalny (UUID) */
+  localId: string;
+  /** Oryginalna wartość z AI */
+  original: { front: string; back: string; source: "ai-full" };
+  /** Aktualne wartości (edytowalne) */
+  front: string;
+  back: string;
+  /** Źródło wynikowe do wysłania do API */
+  source: "ai-full" | "ai-edited";
+  /** ID sesji generowania */
+  generation_id?: number;
+  /** Decyzja użytkownika */
+  decision: CandidateDecision;
+  /** Walidacja pól */
+  validation: {
+    frontError?: string;
+    backError?: string;
+  };
+  /** Flaga czy zawartość została zmieniona */
+  isDirty: boolean;
+}
+
+/** Stan generowania */
+export interface GenerationState {
+  status: "idle" | "loading" | "error" | "completed";
+  errorCode?: ApiErrorCode;
+  message?: string;
+  meta?: { generationId?: number; durationMs?: number; generatedCount?: number };
+}
+
+/** Stan paginacji */
+export interface PaginationState {
+  page: number;
+  perPage: number;
+  total: number;
+}
+
+/** Podsumowanie kandydatów */
+export interface TotalsSummary {
+  accepted: number;
+  rejected: number;
+  edited: number;
+}

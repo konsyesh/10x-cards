@@ -16,10 +16,7 @@ interface KeyboardShortcutHandlers {
  * A = Accept, E = Edit, R = Reject, S = Save
  * ← / → = nawigacja karty, PgUp / PgDn = zmiana strony
  */
-export const useKeyboardShortcuts = (
-  handlers: KeyboardShortcutHandlers,
-  enabled: boolean = true
-) => {
+export const useKeyboardShortcuts = (handlers: KeyboardShortcutHandlers, enabled = true) => {
   useEffect(() => {
     if (!enabled) return;
 

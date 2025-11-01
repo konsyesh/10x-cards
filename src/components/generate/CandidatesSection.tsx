@@ -15,6 +15,9 @@ interface CandidatesSectionProps {
   onNextPage: () => void;
   onPrevPage: () => void;
   startIndex?: number;
+  focusedCardIndex?: number;
+  editingCardId?: string | null;
+  onEditingCardChange?: (cardId: string | null) => void;
 }
 
 export const CandidatesSection: React.FC<CandidatesSectionProps> = ({
@@ -28,6 +31,9 @@ export const CandidatesSection: React.FC<CandidatesSectionProps> = ({
   onNextPage,
   onPrevPage,
   startIndex = 0,
+  focusedCardIndex = 0,
+  editingCardId = null,
+  onEditingCardChange,
 }) => {
   const total = paginationState.total;
 
@@ -41,6 +47,9 @@ export const CandidatesSection: React.FC<CandidatesSectionProps> = ({
         onAccept={onAccept}
         onReject={onReject}
         startIndex={startIndex}
+        focusedCardIndex={focusedCardIndex}
+        editingCardId={editingCardId}
+        onEditingCardChange={onEditingCardChange}
       />
 
       {total > 0 && (

@@ -13,6 +13,9 @@ interface CandidateItemProps {
   onAccept: (localId: string) => void;
   onReject: (localId: string) => void;
   index: number;
+  isFocused?: boolean;
+  isEditing?: boolean;
+  onEditingChange?: (cardId: string | null) => void;
 }
 
 const getDecisionColor = (decision: CandidateVM["decision"]): string => {
@@ -35,8 +38,23 @@ const getDecisionLabel = (decision: CandidateVM["decision"]): string => {
   return labels[decision];
 };
 
-export const CandidateItem: React.FC<CandidateItemProps> = ({ vm, onChange, onAccept, onReject, index }) => {
-  const [isEditing, setIsEditing] = useState(false);
+export const CandidateItem: React.FC<CandidateItemProps> = ({
+  vm,
+  onChange,
+  onAccept,
+  onReject,
+  index,
+  isFocused = false,
+  isEditing: controlledIsEditing = false,
+  onEditingChange,
+}) => {
+  const [isEditing, setIsEditing] = useState(controlledIsEditing);
+
+  // Sync controlled isEditing state
+  React.useEffect(() => {
+    setIsEditing(controlledIsEditing);
+  }, [controlledIsEditing]);
+
   const frontError = vm.validation.frontError;
   const backError = vm.validation.backError;
   const canAccept = !frontError && !backError;
@@ -84,7 +102,12 @@ export const CandidateItem: React.FC<CandidateItemProps> = ({ vm, onChange, onAc
   // Kompaktowy widok (domyślny dla row i card)
   if (!isEditing) {
     return (
-      <Card className="overflow-hidden border-slate-200 dark:border-slate-800">
+      <Card
+        id={`card-${index}`}
+        className={`overflow-hidden border-slate-200 dark:border-slate-800 transition-all ${
+          isFocused ? "ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-slate-950" : ""
+        }`}
+      >
         <CardContent className="p-3">
           <div className="space-y-3">
             {/* Header - Numer, Badge, i Ikony */}
@@ -109,7 +132,10 @@ export const CandidateItem: React.FC<CandidateItemProps> = ({ vm, onChange, onAc
                 <Button
                   size="icon"
                   variant={vm.isDirty ? "outline" : "ghost"}
-                  onClick={() => setIsEditing(true)}
+                  onClick={() => {
+                    setIsEditing(true);
+                    onEditingChange?.(vm.localId);
+                  }}
                   className={
                     vm.isDirty
                       ? "h-7 w-7 bg-blue-50 text-blue-300 dark:bg-blue-900 hover:bg-blue-100 hover:text-blue-700 dark:hover:bg-blue-950"
@@ -147,7 +173,7 @@ export const CandidateItem: React.FC<CandidateItemProps> = ({ vm, onChange, onAc
 
   // Rozszerzony widok (edycja)
   return (
-    <Card className="overflow-hidden border-slate-200 dark:border-slate-800">
+    <Card id={`card-${index}`} className="overflow-hidden border-slate-200 dark:border-slate-800">
       <CardContent className="p-3">
         <div className="space-y-3">
           {/* Header */}
@@ -159,13 +185,15 @@ export const CandidateItem: React.FC<CandidateItemProps> = ({ vm, onChange, onAc
           {/* Front field */}
           <div className="space-y-1">
             <div className="flex items-center justify-between">
-              <label htmlFor="front-input" className="text-xs font-semibold uppercase tracking-wide">
+              <label htmlFor={`front-input-${vm.localId}`} className="text-xs font-semibold uppercase tracking-wide">
                 Pytanie
               </label>
               <span className="text-xs text-muted-foreground"> {vm.front.length}/200 znaków</span>
             </div>
             <Input
-              id="front-input"
+              id={`front-input-${vm.localId}`}
+              // eslint-disable-next-line jsx-a11y/no-autofocus
+              autoFocus={isEditing}
               value={vm.front}
               onChange={(e) => handleFrontChange(e.target.value)}
               maxLength={200}
@@ -183,13 +211,13 @@ export const CandidateItem: React.FC<CandidateItemProps> = ({ vm, onChange, onAc
           {/* Back field */}
           <div className="space-y-1">
             <div className="flex items-center justify-between">
-              <label htmlFor="back-input" className="text-xs font-semibold uppercase tracking-wide">
+              <label htmlFor={`back-input-${vm.localId}`} className="text-xs font-semibold uppercase tracking-wide">
                 Odpowiedź
               </label>
               <span className="text-xs text-muted-foreground">{vm.back.length}/500 znaków</span>
             </div>
             <Textarea
-              id="back-input"
+              id={`back-input-${vm.localId}`}
               value={vm.back}
               onChange={(e) => handleBackChange(e.target.value)}
               maxLength={500}
@@ -209,7 +237,10 @@ export const CandidateItem: React.FC<CandidateItemProps> = ({ vm, onChange, onAc
             <Button
               size="sm"
               variant="default"
-              onClick={() => setIsEditing(false)}
+              onClick={() => {
+                setIsEditing(false);
+                onEditingChange?.(null);
+              }}
               disabled={!canAccept}
               className="flex-1"
             >

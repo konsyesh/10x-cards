@@ -9,6 +9,9 @@ interface CandidatesListProps {
   onAccept: (localId: string) => void;
   onReject: (localId: string) => void;
   startIndex?: number;
+  focusedCardIndex?: number;
+  editingCardId?: string | null;
+  onEditingCardChange?: (cardId: string | null) => void;
 }
 
 export const CandidatesList: React.FC<CandidatesListProps> = ({
@@ -17,6 +20,9 @@ export const CandidatesList: React.FC<CandidatesListProps> = ({
   onAccept,
   onReject,
   startIndex = 0,
+  focusedCardIndex = 0,
+  editingCardId = null,
+  onEditingCardChange,
 }) => {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const layout = isMobile ? "card" : "row";
@@ -40,6 +46,9 @@ export const CandidatesList: React.FC<CandidatesListProps> = ({
           onAccept={onAccept}
           onReject={onReject}
           index={startIndex + idx}
+          isFocused={focusedCardIndex === idx}
+          isEditing={editingCardId === item.localId}
+          onEditingChange={onEditingCardChange}
         />
       ))}
     </div>

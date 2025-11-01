@@ -1,4 +1,4 @@
-import React, { useState, useReducer, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { GenerateControls } from "./GenerateControls";
 import { CandidatesSection } from "./CandidatesSection";
 import { BulkSaveToolbar } from "./BulkSaveToolbar";
@@ -16,21 +16,21 @@ export const GenerateView: React.FC = () => {
   const [sourceText, setSourceText] = useState("");
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
-  const [pendingNavigation, setPendingNavigation] = useState<() => void | null>(null);
+  const [editingCardId, setEditingCardId] = useState<string | null>(null);
+  const [focusedCardIndex, setFocusedCardIndex] = useState<number>(0);
 
   // Hooki
-  const { state: generationState, generate, retry, reset: resetGeneration } = useGeneration();
-  const { candidates, setCandidates, accept, reject, updateField, undo, getTotals, getAcceptedOnly } = useCandidates(
-    []
-  );
+  const { state: generationState, generate, retry } = useGeneration();
+  const { candidates, setCandidates, accept, reject, getAcceptedOnly, getTotals } = useCandidates([]);
 
   const { currentPageItems, state: paginationState, goToPage, nextPage, prevPage } = usePagination(candidates, 30);
 
-  const { state: saveState, saveFlashcards, reset: resetSave } = useSaveFlashcards();
+  const { state: saveState, saveFlashcards } = useSaveFlashcards();
 
   const totals = getTotals();
   const isGenerating = generationState.status === "loading";
   const hasUnsavedChanges = totals.accepted > 0;
+  const totalPages = Math.ceil(paginationState.total / paginationState.perPage);
 
   // Obsługa beforeunload
   useEffect(() => {
@@ -43,6 +43,15 @@ export const GenerateView: React.FC = () => {
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [hasUnsavedChanges]);
+
+  // Scroll do karty z fokusem
+  useEffect(() => {
+    const focusedCard = document.getElementById(`card-${focusedCardIndex}`);
+    focusedCard?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, [focusedCardIndex]);
 
   // Obsługa generacji
   const handleGenerate = useCallback(async () => {
@@ -83,18 +92,21 @@ export const GenerateView: React.FC = () => {
   useKeyboardShortcuts(
     {
       onAccept: () => {
-        if (currentPageItems.length > 0) {
-          accept(currentPageItems[0].localId);
+        if (currentPageItems.length > 0 && focusedCardIndex < currentPageItems.length) {
+          accept(currentPageItems[focusedCardIndex].localId);
         }
       },
       onEdit: () => {
         if (currentPageItems.length > 0) {
-          // Logika edycji - otwórz modal lub ustaw mode edycji
+          const cardToEdit = currentPageItems[focusedCardIndex];
+          if (cardToEdit) {
+            setEditingCardId(cardToEdit.localId);
+          }
         }
       },
       onReject: () => {
-        if (currentPageItems.length > 0) {
-          reject(currentPageItems[0].localId);
+        if (currentPageItems.length > 0 && focusedCardIndex < currentPageItems.length) {
+          reject(currentPageItems[focusedCardIndex].localId);
         }
       },
       onSave: () => {
@@ -105,13 +117,23 @@ export const GenerateView: React.FC = () => {
       onPrevPage: prevPage,
       onNextPage: nextPage,
       onPrevCard: () => {
-        // Poprzednia karta w bieżącej stronie
+        if (focusedCardIndex > 0) {
+          setFocusedCardIndex(focusedCardIndex - 1);
+        } else if (paginationState.page > 1) {
+          prevPage();
+          setFocusedCardIndex(currentPageItems.length - 1);
+        }
       },
       onNextCard: () => {
-        // Następna karta w bieżącej stronie
+        if (focusedCardIndex < currentPageItems.length - 1) {
+          setFocusedCardIndex(focusedCardIndex + 1);
+        } else if (paginationState.page < totalPages) {
+          nextPage();
+          setFocusedCardIndex(0);
+        }
       },
     },
-    candidates.length > 0
+    candidates.length > 0 && !showSaveModal && !showUnsavedModal && !editingCardId
   );
 
   return (
@@ -145,6 +167,9 @@ export const GenerateView: React.FC = () => {
           onNextPage={nextPage}
           onPrevPage={prevPage}
           startIndex={paginationState.page * paginationState.perPage - paginationState.perPage}
+          focusedCardIndex={focusedCardIndex}
+          editingCardId={editingCardId}
+          onEditingCardChange={setEditingCardId}
         />
       )}
 
@@ -174,16 +199,16 @@ export const GenerateView: React.FC = () => {
         isOpen={showUnsavedModal}
         onSave={async () => {
           await handleConfirmSave();
-          if (pendingNavigation) {
-            pendingNavigation();
-          }
+          // The original code had pendingNavigation here, but it was removed from state.
+          // If the intent was to keep it, it would need to be re-added to state.
+          // For now, removing it as per the edit hint.
         }}
         onDiscard={() => {
           setCandidates([]);
           setShowUnsavedModal(false);
-          if (pendingNavigation) {
-            pendingNavigation();
-          }
+          // The original code had pendingNavigation here, but it was removed from state.
+          // If the intent was to keep it, it would need to be re-added to state.
+          // For now, removing it as per the edit hint.
         }}
         onCancel={() => setShowUnsavedModal(false)}
       />

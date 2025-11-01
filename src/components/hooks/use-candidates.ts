@@ -83,6 +83,10 @@ export const useCandidates = (initialCandidates: CandidateVM[] = []) => {
     return candidates.filter((c) => c.decision === "accepted" && !c.validation.frontError && !c.validation.backError);
   }, [candidates]);
 
+  const acceptAll = useCallback(() => {
+    setCandidates((prev) => prev.map((c) => (c.decision !== "rejected" ? { ...c, decision: "accepted" as const } : c)));
+  }, []);
+
   return {
     candidates,
     setCandidates,
@@ -93,5 +97,6 @@ export const useCandidates = (initialCandidates: CandidateVM[] = []) => {
     clear,
     getTotals,
     getAcceptedOnly,
+    acceptAll,
   };
 };

@@ -17,7 +17,10 @@ interface CandidatesSectionProps {
   startIndex?: number;
   focusedCardIndex?: number;
   editingCardId?: string | null;
-  onEditingCardChange?: (cardId: string | null) => void;
+  onEditingCardChange: (cardId: string | null) => void;
+  onAcceptAll?: () => void;
+  onSave?: () => void;
+  isLoading?: boolean;
 }
 
 export const CandidatesSection: React.FC<CandidatesSectionProps> = ({
@@ -34,12 +37,23 @@ export const CandidatesSection: React.FC<CandidatesSectionProps> = ({
   focusedCardIndex = 0,
   editingCardId = null,
   onEditingCardChange,
+  onAcceptAll,
+  onSave,
+  isLoading = false,
 }) => {
   const total = paginationState.total;
 
   return (
     <div className="space-y-4">
-      {total > 0 && <CandidatesToolbar totals={totals} total={total} />}
+      {total > 0 && (
+        <CandidatesToolbar
+          totals={totals}
+          total={total}
+          onAcceptAll={onAcceptAll}
+          onSave={onSave}
+          isLoading={isLoading}
+        />
+      )}
 
       <CandidatesList
         items={items}

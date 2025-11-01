@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { GenerateControls } from "./GenerateControls";
 import { CandidatesSection } from "./CandidatesSection";
-import { BulkSaveToolbar } from "./BulkSaveToolbar";
 import { SaveSummaryModal } from "./SaveSummaryModal";
 import { UnsavedChangesModal } from "./UnsavedChangesModal";
 import { KeyboardShortcutsHint } from "./KeyboardShortcutsHint";
@@ -21,7 +20,7 @@ export const GenerateView: React.FC = () => {
 
   // Hooki
   const { state: generationState, generate, retry } = useGeneration();
-  const { candidates, setCandidates, accept, reject, getAcceptedOnly, getTotals } = useCandidates([]);
+  const { candidates, setCandidates, accept, reject, getAcceptedOnly, getTotals, acceptAll } = useCandidates([]);
 
   const { currentPageItems, state: paginationState, goToPage, nextPage, prevPage } = usePagination(candidates, 30);
 
@@ -170,16 +169,9 @@ export const GenerateView: React.FC = () => {
           focusedCardIndex={focusedCardIndex}
           editingCardId={editingCardId}
           onEditingCardChange={setEditingCardId}
-        />
-      )}
-
-      {/* Bulk Save Toolbar */}
-      {candidates.length > 0 && (
-        <BulkSaveToolbar
-          acceptedCount={totals.accepted}
-          acceptedEditedCount={totals.edited}
+          onAcceptAll={acceptAll}
+          onSave={() => setShowSaveModal(true)}
           isLoading={saveState.status === "loading"}
-          onOpenSummary={() => setShowSaveModal(true)}
         />
       )}
 

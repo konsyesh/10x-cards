@@ -23,7 +23,7 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
   if (totalPages <= 1) return null;
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+    <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border bg-card p-4">
       <div className="text-sm font-medium text-muted-foreground">
         Strona <span className="font-semibold">{state.page}</span> z{" "}
         <span className="font-semibold">{totalPages}</span>

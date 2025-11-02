@@ -1,0 +1,277 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+
+## 🎨 Color Token Usage Patterns (CRITICAL FOR COMPONENTS)
+
+### The Principle: Use Semantic Tokens, Never Hardcoded Colors
+
+**Why?** When you use semantic tokens (e.g., `bg-background`), the component automatically adapts to theme changes. Hardcoded colors (e.g., `bg-slate-200`) are "frozen" and don't respond to theme changes.
+
+```tsx
+// ✅ CORRECT - Theme-aware
+<div className="bg-background text-foreground border border-border">
+
+// ❌ WRONG - Theme-blind
+<div className="bg-slate-200 text-slate-900 border border-slate-300">
+```
+
+---
+
+### Status Tokens (Success/Info/Warning)
+
+**New semantic tokens for state-based feedback:**
+
+- **`success`** — Positive state (form validation passed, operation completed)
+- **`info`** — Informational state (loading, general info)
+- **`warning`** — Cautionary state (warnings, important notices)
+
+Each has 4 variants:
+
+- `text-success` / `border-success` — Bold state
+- `bg-success-soft` / `text-success-soft-foreground` — Soft alert background
+- `text-info`, `border-info`, `bg-info-soft`, etc.
+- `text-warning`, `border-warning`, `bg-warning-soft`, etc.
+
+**Usage:**
+
+```tsx
+// Success validation
+<div className="text-success flex items-center gap-1">
+  <CheckCircle2 /> Pole poprawne
+</div>
+
+// Info alert
+<Alert className="border-info bg-info-soft">
+  <AlertTitle className="text-info-soft-foreground">Ładowanie...</AlertTitle>
+</Alert>
+
+// Warning alert
+<Alert className="border-warning bg-warning-soft">
+  <AlertTitle className="text-warning-soft-foreground">Uwaga</AlertTitle>
+</Alert>
+```
+
+---
+
+### Color Token Hierarchy
+
+Every shadcn/ui color token serves a specific purpose. Use the right token for the right situation:
+
+#### **Layer 1: Structural (Background & Container)**
+
+```tsx
+// Main page/section background
+<div className="bg-background text-foreground">Content</div>
+
+// Cards, modals, containers
+<Card className="bg-card text-card-foreground">
+  <CardContent>Info here</CardContent>
+</Card>
+
+// Dropdown/popover backgrounds
+<Popover className="bg-popover text-popover-foreground">
+```
+
+#### **Layer 2: Content (Secondary, Disabled, Borders)**
+
+```tsx
+// Secondary text (hints, disabled state, metadata)
+<span className="text-muted-foreground">Disabled or secondary info</span>
+
+// All borders
+<div className="border border-border">
+
+// Form inputs background
+<Input className="bg-input border border-border" />
+
+// Form field backgrounds
+<textarea className="bg-input" />
+```
+
+#### **Layer 3: Actions (CTA, Dangerous, Highlights)**
+
+```tsx
+// PRIMARY - Main call-to-action button
+<Button className="bg-primary text-primary-foreground">Save</Button>
+
+// SECONDARY - Alternative action
+<Button className="bg-secondary text-secondary-foreground">Cancel</Button>
+
+// ACCENT - Highlights, hover states, indicators
+<div className="hover:bg-accent hover:text-accent-foreground">Hover me</div>
+
+// DESTRUCTIVE - Delete, remove, dangerous actions
+<Button className="bg-destructive text-destructive-foreground">Delete</Button>
+```
+
+---
+
+### Complete Example: Refactored Component
+
+```tsx
+// BEFORE (❌ Hardcoded, theme-blind)
+export const Card = ({ isAccepted, isDirty, onDelete }) => {
+  return (
+    <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+      <div className="text-slate-900 dark:text-slate-50">Title</div>
+      <div className="text-slate-600 dark:text-slate-400">Description</div>
+
+      <button className="hover:bg-green-100 dark:hover:bg-green-950">Accept</button>
+      <button className="hover:bg-blue-100 dark:hover:bg-blue-950">Edit</button>
+      <button className="text-red-600 dark:text-red-400 hover:bg-red-100">Delete</button>
+    </div>
+  );
+};
+
+// AFTER (✅ Theme-aware semantic tokens)
+export const Card = ({ isAccepted, isDirty, onDelete }) => {
+  return (
+    <div className="bg-card border border-border">
+      <div className="text-card-foreground font-medium">Title</div>
+      <div className="text-muted-foreground">Description</div>
+
+      <button className="hover:bg-accent hover:text-accent-foreground">Accept</button>
+      <button className="hover:bg-secondary hover:text-secondary-foreground">Edit</button>
+      <button className="text-destructive hover:bg-destructive/10">Delete</button>
+    </div>
+  );
+};
+```
+
+---
+
+### Token Reference Table
+
+| Token                                            | Purpose                     | Usage                                 |
+| ------------------------------------------------ | --------------------------- | ------------------------------------- |
+| `bg-background` / `text-foreground`              | Page/main background + text | Page containers, body text            |
+| `bg-card` / `text-card-foreground`               | Card containers             | Cards, boxes, panels                  |
+| `text-muted-foreground`                          | Secondary text              | Labels, hints, disabled state         |
+| `border-border`                                  | All borders                 | Dividers, card borders, input borders |
+| `bg-input` / `border-input`                      | Form fields                 | Input, textarea, select               |
+| `bg-primary` / `text-primary-foreground`         | Main action button          | "Save", "Submit", CTA buttons         |
+| `bg-secondary` / `text-secondary-foreground`     | Alternative action          | "Cancel", "Skip", secondary buttons   |
+| `bg-accent` / `text-accent-foreground`           | Highlights, hover           | Hover states, indicators, badges      |
+| `bg-destructive` / `text-destructive-foreground` | Dangerous action            | "Delete", "Remove" buttons            |
+| `bg-ring`                                        | Focus state outline         | Form focus, keyboard navigation       |
+| `border-success` / `bg-success-soft`             | Success state               | Valid form fields, completion alerts  |
+| `text-success` / `text-success-soft-foreground`  | Success text                | Checkmarks, success messages          |
+| `border-info` / `bg-info-soft`                   | Informational state         | Loading alerts, info messages         |
+| `text-info` / `text-info-soft-foreground`        | Info text                   | Info icons, status indicators         |
+| `border-warning` / `bg-warning-soft`             | Warning state               | Caution alerts, important notices     |
+| `text-warning` / `text-warning-soft-foreground`  | Warning text                | Warning icons, caution messages       |
+
+---
+
+### Anti-Patterns (AVOID These)
+
+```tsx
+// ❌ Mixing semantic tokens with hardcoded colors
+<div className="bg-background text-red-500">
+  {/* Background responds to theme, but text is always red */}
+</div>
+
+// ❌ Using Tailwind's arbitrary color names for UI
+<div className="bg-slate-200 dark:bg-slate-800">
+  {/* This is OKAY for data visualization charts, BAD for UI */}
+</div>
+
+// ❌ Duplicating dark: variants when tokens handle it
+<div className="bg-primary dark:bg-blue-700">
+  {/* Wrong! bg-primary already has dark mode colors */}
+</div>
+
+// ❌ Per-component color definitions
+// In ComponentA.tsx
+const colors = {
+  bg: "bg-blue-100 dark:bg-blue-900",
+  text: "text-blue-900 dark:text-blue-100",
+};
+// Problem: Every component reinvents colors, inconsistency!
+```
+
+---
+
+### Pro Patterns (DO THIS)
+
+```tsx
+// ✅ Semantic consistency
+const StatCard = () => (
+  <div className="bg-card text-card-foreground border border-border p-4">
+    <h3 className="font-semibold">Stat</h3>
+    <p className="text-muted-foreground">123 items</p>
+  </div>
+);
+
+// ✅ Proper action styling
+const ActionButtons = () => (
+  <div className="flex gap-2">
+    <button className="bg-primary text-primary-foreground">Primary</button>
+    <button className="bg-secondary text-secondary-foreground">Secondary</button>
+    <button className="text-destructive hover:bg-destructive/10">Delete</button>
+  </div>
+);
+
+// ✅ Hover/Focus using accent
+const InteractiveItem = () => (
+  <div className="hover:bg-accent hover:text-accent-foreground transition-colors">Hover me</div>
+);
+
+// ✅ Form fields
+const FormField = () => (
+  <input className="bg-input border border-border text-foreground focus:ring-2 focus:ring-ring" />
+);
+
+// ✅ Status alerts (Success/Info/Warning)
+const StatusAlerts = () => (
+  <div className="space-y-3">
+    {/* Success - form validation, completion */}
+    <Alert className="border-success bg-success-soft">
+      <CheckCircle2 className="h-4 w-4 text-success-soft-foreground" />
+      <AlertTitle className="text-success-soft-foreground">Zapis udany</AlertTitle>
+      <AlertDescription className="text-success-soft-foreground">Dane zostały pomyślnie zapisane.</AlertDescription>
+    </Alert>
+
+    {/* Info - loading, informational messages */}
+    <Alert className="border-info bg-info-soft">
+      <Loader2 className="h-4 w-4 animate-spin text-info-soft-foreground" />
+      <AlertTitle className="text-info-soft-foreground">Przetwarzanie</AlertTitle>
+      <AlertDescription className="text-info-soft-foreground">Proszę czekać, trwa przetwarzanie...</AlertDescription>
+    </Alert>
+
+    {/* Warning - caution, important notices */}
+    <Alert className="border-warning bg-warning-soft">
+      <AlertTriangle className="h-4 w-4 text-warning-soft-foreground" />
+      <AlertTitle className="text-warning-soft-foreground">Uwaga</AlertTitle>
+      <AlertDescription className="text-warning-soft-foreground">Ta akcja nie może być cofnięta.</AlertDescription>
+    </Alert>
+
+    {/* Error - destructive, errors */}
+    <Alert className="border-destructive bg-destructive/10">
+      <AlertCircle className="h-4 w-4 text-destructive" />
+      <AlertTitle className="text-destructive">Błąd</AlertTitle>
+      <AlertDescription className="text-destructive/80">Coś poszło nie tak.</AlertDescription>
+    </Alert>
+  </div>
+);
+
+// ✅ Form validation feedback
+const FormValidation = ({ hasError, isValid }) => (
+  <div className="space-y-2">
+    <input className="bg-input border border-border w-full px-3 py-2" />
+    {isValid && (
+      <p className="text-sm text-success flex items-center gap-1">
+        <CheckCircle2 className="h-4 w-4" /> Poprawne
+      </p>
+    )}
+    {hasError && (
+      <p className="text-sm text-destructive flex items-center gap-1">
+        <AlertCircle className="h-4 w-4" /> Błąd walidacji
+      </p>
+    )}
+  </div>
+);
+```

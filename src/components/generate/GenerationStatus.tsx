@@ -2,7 +2,7 @@ import React from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
+import { Loader2, AlertCircle, RefreshCw, CheckCircle2 } from "lucide-react";
 import type { ApiErrorCode } from "@/types";
 
 type GenerationStatusState = "idle" | "loading" | "error" | "completed";
@@ -37,15 +37,15 @@ export const GenerationStatus: React.FC<GenerationStatusProps> = ({
 
   if (state === "loading") {
     return (
-      <Alert className="border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950">
-        <Loader2 className="h-4 w-4 animate-spin text-blue-600 dark:text-blue-400" />
-        <AlertTitle className="text-blue-900 dark:text-blue-200">Generowanie w toku</AlertTitle>
-        <AlertDescription className="text-blue-800 dark:text-blue-300">
+      <Alert className="border-info bg-info-soft">
+        <Loader2 className="h-4 w-4 animate-spin text-info-soft-foreground" />
+        <AlertTitle className="text-info-soft-foreground">Generowanie w toku</AlertTitle>
+        <AlertDescription className="text-info-soft-foreground">
           Proszę czekać, trwa generowanie kandydatów z AI...
         </AlertDescription>
         <div className="mt-2 space-y-1">
           <Progress value={60} className="h-2" />
-          <p className="text-xs text-blue-700 dark:text-blue-400">Może to potrwać kilka sekund</p>
+          <p className="text-xs text-info-soft-foreground">Może to potrwać kilka sekund</p>
         </div>
       </Alert>
     );
@@ -53,18 +53,16 @@ export const GenerationStatus: React.FC<GenerationStatusProps> = ({
 
   if (state === "error") {
     return (
-      <Alert className="border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950">
-        <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
-        <AlertTitle className="text-red-900 dark:text-red-200">Błąd generowania</AlertTitle>
-        <AlertDescription className="text-red-800 dark:text-red-300">
-          {message || getErrorMessage(errorCode)}
-        </AlertDescription>
+      <Alert className="border-destructive bg-destructive/10">
+        <AlertCircle className="h-4 w-4 text-destructive" />
+        <AlertTitle className="text-destructive">Błąd generowania</AlertTitle>
+        <AlertDescription className="text-destructive/80">{message || getErrorMessage(errorCode)}</AlertDescription>
         {onRetry && (
           <Button
             onClick={onRetry}
             variant="outline"
             size="sm"
-            className="mt-2 gap-2 border-red-300 hover:bg-red-100 dark:border-red-700 dark:hover:bg-red-900"
+            className="mt-2 gap-2 border-destructive/30 hover:bg-destructive/10"
           >
             <RefreshCw className="h-3 w-3" />
             Spróbuj ponownie
@@ -76,10 +74,10 @@ export const GenerationStatus: React.FC<GenerationStatusProps> = ({
 
   if (state === "completed") {
     return (
-      <Alert className="border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950">
-        <Loader2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-        <AlertTitle className="text-green-900 dark:text-green-200">Pomyślnie wygenerowano</AlertTitle>
-        <AlertDescription className="text-green-800 dark:text-green-300">
+      <Alert className="border-success bg-success-soft">
+        <CheckCircle2 className="h-4 w-4 text-success-soft-foreground" />
+        <AlertTitle className="text-success-soft-foreground">Pomyślnie wygenerowano</AlertTitle>
+        <AlertDescription className="text-success-soft-foreground">
           Wygenerowano {generatedCount || 0} kandydatów. Przejrzyj je poniżej.
         </AlertDescription>
       </Alert>

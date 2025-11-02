@@ -41,46 +41,36 @@ export const SaveSummaryModal: React.FC<SaveSummaryModalProps> = ({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Potwierdzenie zapisu</DialogTitle>
-          <DialogDescription>
-            Przejrzyj podsumowanie przed zapisaniem fiszek
-          </DialogDescription>
+          <DialogDescription>Przejrzyj podsumowanie przed zapisaniem fiszek</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           {error && (
-            <Alert className="border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950">
-              <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
-              <AlertTitle className="text-red-900 dark:text-red-200">
-                Błąd
-              </AlertTitle>
-              <AlertDescription className="text-red-800 dark:text-red-300">
-                {error}
-              </AlertDescription>
+            <Alert className="border-destructive bg-destructive/10">
+              <AlertCircle className="h-4 w-4 text-destructive" />
+              <AlertTitle className="text-destructive">Błąd</AlertTitle>
+              <AlertDescription className="text-destructive/80">{error}</AlertDescription>
             </Alert>
           )}
 
-          <div className="space-y-3 rounded-lg bg-slate-50 p-4 dark:bg-slate-900">
+          <div className="space-y-3 rounded-lg bg-card p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm">
-                <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                <CheckCircle2 className="h-4 w-4 text-success" />
                 <span>Niezedytowane karty</span>
               </div>
-              <span className="font-semibold text-green-600 dark:text-green-400">
-                {acceptedUnedited}
-              </span>
+              <span className="font-semibold text-success">{acceptedUnedited}</span>
             </div>
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm">
-                <Edit3 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <Edit3 className="h-4 w-4 text-info" />
                 <span>Edytowane karty</span>
               </div>
-              <span className="font-semibold text-blue-600 dark:text-blue-400">
-                {acceptedEdited}
-              </span>
+              <span className="font-semibold text-info">{acceptedEdited}</span>
             </div>
 
-            <div className="border-t border-slate-200 pt-3 dark:border-slate-700">
+            <div className="border-t border-border pt-3">
               <div className="flex items-center justify-between font-semibold">
                 <span>Razem do zapisania</span>
                 <span className="text-lg">{totalAccepted}</span>
@@ -88,30 +78,20 @@ export const SaveSummaryModal: React.FC<SaveSummaryModalProps> = ({
             </div>
           </div>
 
-          <Alert className="border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950">
-            <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-            <AlertTitle className="text-blue-900 dark:text-blue-200">
-              Operacja nieodwracalna
-            </AlertTitle>
-            <AlertDescription className="text-blue-800 dark:text-blue-300">
+          <Alert className="border-info bg-info-soft">
+            <AlertCircle className="h-4 w-4 text-info-soft-foreground" />
+            <AlertTitle className="text-info-soft-foreground">Operacja nieodwracalna</AlertTitle>
+            <AlertDescription className="text-info-soft-foreground">
               Po zapisaniu karty będą dostępne w Twojej bibliotece
             </AlertDescription>
           </Alert>
         </div>
 
         <DialogFooter className="gap-2">
-          <Button
-            variant="outline"
-            onClick={onCancel}
-            disabled={isLoading}
-          >
+          <Button variant="outline" onClick={onCancel} disabled={isLoading}>
             Anuluj
           </Button>
-          <Button
-            onClick={handleConfirm}
-            disabled={isLoading || totalAccepted === 0}
-            className="gap-2"
-          >
+          <Button onClick={handleConfirm} disabled={isLoading || totalAccepted === 0} className="gap-2">
             {isLoading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />

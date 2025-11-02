@@ -47,11 +47,11 @@ export const KeyboardShortcutsHint: React.FC<KeyboardShortcutsHintProps> = ({ sh
 
           <div className="space-y-2">
             {shortcuts.map(({ key, description }) => (
-              <div key={key} className="flex items-center gap-3 rounded-lg bg-slate-50 p-2 dark:bg-slate-900">
-                <kbd className="inline-flex min-w-[3rem] items-center justify-center rounded border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200">
+              <div key={key} className="flex items-center gap-3 rounded-lg bg-card p-2">
+                <kbd className="inline-flex min-w-[3rem] items-center justify-center rounded border border-border bg-background px-3 py-2 text-sm font-semibold text-foreground shadow-sm">
                   {key}
                 </kbd>
-                <span className="text-sm text-slate-700 dark:text-slate-300">{description}</span>
+                <span className="text-sm text-foreground">{description}</span>
               </div>
             ))}
           </div>

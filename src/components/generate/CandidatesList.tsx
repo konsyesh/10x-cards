@@ -29,9 +29,9 @@ export const CandidatesList: React.FC<CandidatesListProps> = ({
 
   if (items.length === 0) {
     return (
-      <div className="rounded-lg border-2 border-dashed border-slate-300 p-12 text-center dark:border-slate-700">
-        <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Brak kandydatów</p>
-        <p className="text-xs text-slate-600 dark:text-slate-400">Wygeneruj kandydatów, aby zobaczyć je tutaj</p>
+      <div className="rounded-lg border-2 border-dashed border-border p-12 text-center">
+        <p className="text-sm font-semibold text-foreground">Brak kandydatów</p>
+        <p className="text-xs text-muted-foreground">Wygeneruj kandydatów, aby zobaczyć je tutaj</p>
       </div>
     );
   }

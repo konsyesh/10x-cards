@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
@@ -6,7 +6,6 @@ import { AlertCircle, CheckCircle2 } from "lucide-react";
 interface SourceTextareaProps {
   value: string;
   onChange: (value: string) => void;
-  isValid: boolean;
   min?: number;
   max?: number;
 }
@@ -17,7 +16,6 @@ const MAX_CHARS = 50000;
 export const SourceTextarea: React.FC<SourceTextareaProps> = ({
   value,
   onChange,
-  isValid,
   min = MIN_CHARS,
   max = MAX_CHARS,
 }) => {
@@ -34,17 +32,11 @@ export const SourceTextarea: React.FC<SourceTextareaProps> = ({
         </Label>
         <div className="flex items-center gap-2 text-sm">
           <span
-            className={`font-medium ${
-              isInRange
-                ? "text-green-600 dark:text-green-400"
-                : isTooShort || isTooLong
-                  ? "text-red-600 dark:text-red-400"
-                  : "text-muted-foreground"
-            }`}
+            className={`font-medium ${isInRange ? "text-success" : isTooShort || isTooLong ? "text-destructive" : "text-muted-foreground"}`}
           >
             {charCount.toLocaleString("pl-PL")} / {max.toLocaleString("pl-PL")} znaków
           </span>
-          {isInRange && <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />}
+          {isInRange && <CheckCircle2 className="h-4 w-4 text-success" />}
         </div>
       </div>
 
@@ -53,13 +45,13 @@ export const SourceTextarea: React.FC<SourceTextareaProps> = ({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={`Wklej tekst (min. ${min.toLocaleString("pl-PL")} znaków)...`}
-        className="min-h-[200px] max-h-[200px] resize-none"
+        className="min-h-[200px] max-h-[200px] resize-none bg-secondary"
         aria-invalid={isTooShort || isTooLong}
         aria-describedby={isTooShort || isTooLong ? "char-error" : undefined}
       />
 
       {(isTooShort || isTooLong) && (
-        <div id="char-error" className="flex items-start gap-2 text-sm text-red-600 dark:text-red-400">
+        <div id="char-error" className="flex items-start gap-2 text-sm text-destructive">
           <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
           <div>
             {isTooShort && (

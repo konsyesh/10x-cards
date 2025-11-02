@@ -23,7 +23,7 @@ export const CandidatesToolbar: React.FC<CandidatesToolbarProps> = ({
   const hasItems = totals.accepted > 0;
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-4">
       {/* Badgi - info section */}
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant="outline" className="gap-1">
@@ -37,18 +37,18 @@ export const CandidatesToolbar: React.FC<CandidatesToolbarProps> = ({
           </Badge>
         )}
         <Badge variant="outline" className="gap-1">
-          <CheckCircle2 className="h-3 w-3 text-green-600 dark:text-green-400" />
-          Zaakceptowane: <span className="font-semibold text-green-600 dark:text-green-400">{totals.accepted}</span>
+          <CheckCircle2 className="h-3 w-3 text-success" />
+          Zaakceptowane: <span className="font-semibold text-success">{totals.accepted}</span>
         </Badge>
 
         <Badge variant="outline" className="gap-1">
-          <Edit3 className="h-3 w-3 text-blue-600 dark:text-blue-400" />
-          Edytowane: <span className="font-semibold text-blue-600 dark:text-blue-400">{totals.edited}</span>
+          <Edit3 className="h-3 w-3 text-info" />
+          Edytowane: <span className="font-semibold text-info">{totals.edited}</span>
         </Badge>
 
         <Badge variant="outline" className="gap-1">
-          <XCircle className="h-3 w-3 text-red-600 dark:text-red-400" />
-          Odrzucone: <span className="font-semibold text-red-600 dark:text-red-400">{totals.rejected}</span>
+          <XCircle className="h-3 w-3 text-destructive" />
+          Odrzucone: <span className="font-semibold text-destructive">{totals.rejected}</span>
         </Badge>
       </div>
 

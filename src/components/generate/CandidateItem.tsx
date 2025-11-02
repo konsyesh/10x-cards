@@ -20,10 +20,10 @@ interface CandidateItemProps {
 
 const getDecisionColor = (decision: CandidateVM["decision"]): string => {
   const colors = {
-    pending: "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100",
-    accepted: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100",
-    rejected: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100",
-    edited: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100",
+    pending: "bg-muted text-muted-foreground",
+    accepted: "bg-accent text-accent-foreground",
+    rejected: "bg-destructive text-destructive-foreground",
+    edited: "bg-secondary text-secondary-foreground",
   };
   return colors[decision];
 };
@@ -104,8 +104,8 @@ export const CandidateItem: React.FC<CandidateItemProps> = ({
     return (
       <Card
         id={`card-${index}`}
-        className={`overflow-hidden border-slate-200 dark:border-slate-800 transition-all ${
-          isFocused ? "ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-slate-950" : ""
+        className={`overflow-hidden border-border transition-all ${
+          isFocused ? "ring-2 ring-primary ring-offset-2 dark:ring-offset-background" : ""
         }`}
       >
         <CardContent className="p-3">
@@ -123,8 +123,7 @@ export const CandidateItem: React.FC<CandidateItemProps> = ({
                   size="icon"
                   variant="ghost"
                   onClick={() => onAccept(vm.localId)}
-                  //   disabled={!canAccept}
-                  className="h-7 w-7 hover:bg-green-100 hover:text-green-700 dark:hover:bg-green-950"
+                  className="h-7 w-7 hover:bg-accent hover:text-accent-foreground"
                   aria-label={`Zaakceptuj kartę ${index + 1}`}
                 >
                   <Check className="h-4 w-4" />
@@ -138,8 +137,9 @@ export const CandidateItem: React.FC<CandidateItemProps> = ({
                   }}
                   className={
                     vm.isDirty
-                      ? "h-7 w-7 bg-blue-50 text-blue-300 dark:bg-blue-900 hover:bg-blue-100 hover:text-blue-700 dark:hover:bg-blue-950"
-                      : "h-7 w-7 hover:bg-blue-100 hover:text-blue-700 dark:hover:bg-blue-950"
+                      ? //   ? "h-7 w-7 bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                        "h-7 w-7 bg-accent/50 hover:bg-accent hover:text-accent-foreground"
+                      : "h-7 w-7 hover:bg-accent hover:text-accent-foreground"
                   }
                   aria-label={`Edytuj kartę ${index + 1}`}
                 >
@@ -149,7 +149,7 @@ export const CandidateItem: React.FC<CandidateItemProps> = ({
                   size="icon"
                   variant="ghost"
                   onClick={() => onReject(vm.localId)}
-                  className="h-7 w-7 text-red-600 hover:bg-red-100 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950"
+                  className="h-7 w-7 text-destructive hover:bg-destructive/10 hover:text-destructive"
                   aria-label={`Odrzuć kartę ${index + 1}`}
                 >
                   <X className="h-4 w-4" />
@@ -158,12 +158,12 @@ export const CandidateItem: React.FC<CandidateItemProps> = ({
             </div>
 
             {/* Front */}
-            <div className="font-medium text-sm text-slate-900 dark:text-slate-50">{vm.front}</div>
+            <div className="font-medium text-sm text-foreground">{vm.front}</div>
 
             {/* Back */}
             <div className="space-y-1">
               <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Odpowiedź</div>
-              <div className="text-sm text-slate-700 dark:text-slate-300">{vm.back}</div>
+              <div className="text-sm text-foreground">{vm.back}</div>
             </div>
           </div>
         </CardContent>
@@ -173,7 +173,7 @@ export const CandidateItem: React.FC<CandidateItemProps> = ({
 
   // Rozszerzony widok (edycja)
   return (
-    <Card id={`card-${index}`} className="overflow-hidden border-slate-200 dark:border-slate-800">
+    <Card id={`card-${index}`} className="overflow-hidden border-border">
       <CardContent className="p-3">
         <div className="space-y-3">
           {/* Header */}

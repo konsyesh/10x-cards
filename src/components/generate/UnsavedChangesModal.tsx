@@ -8,13 +8,14 @@ import {
   AlertDialogFooter,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { AlertCircle } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 
 interface UnsavedChangesModalProps {
   isOpen: boolean;
   onSave: () => void;
   onDiscard: () => void;
   onCancel: () => void;
+  isLoading?: boolean;
 }
 
 export const UnsavedChangesModal: React.FC<UnsavedChangesModalProps> = ({
@@ -22,12 +23,13 @@ export const UnsavedChangesModal: React.FC<UnsavedChangesModalProps> = ({
   onSave,
   onDiscard,
   onCancel,
+  isLoading = false,
 }) => {
   return (
-    <AlertDialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>
+    <AlertDialog open={isOpen}>
       <AlertDialogContent>
         <div className="flex gap-3">
-          <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+          <AlertTriangle className="h-5 w-5 text-warning" />
           <div className="flex-1">
             <AlertDialogTitle>Niezapisane zmiany</AlertDialogTitle>
             <AlertDialogDescription className="mt-2">
@@ -37,17 +39,18 @@ export const UnsavedChangesModal: React.FC<UnsavedChangesModalProps> = ({
         </div>
 
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onCancel}>
+          <AlertDialogCancel onClick={onCancel} disabled={isLoading}>
             Anuluj
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={onDiscard}
-            className="bg-red-600 hover:bg-red-700"
+            disabled={isLoading}
+            className="bg-destructive hover:bg-destructive/80 disabled:bg-destructive/50 disabled:cursor-not-allowed"
           >
             Porzuć zmiany
           </AlertDialogAction>
-          <AlertDialogAction onClick={onSave}>
-            Zapisz karty
+          <AlertDialogAction onClick={onSave} disabled={isLoading} className="disabled:cursor-not-allowed">
+            {isLoading ? "Zapisuję..." : "Zapisz karty"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

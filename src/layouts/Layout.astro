@@ -16,21 +16,21 @@ const { title = "10x Astro Starter" } = Astro.props;
     <script is:inline>
       const store = typeof localStorage !== "undefined" ? localStorage : null;
 
-      // Get saved preferences from localStorage
-      let savedTheme = store?.getItem("theme");
-      let savedMode = store?.getItem("mode");
+      /* Get saved preferences from localStorage */
+      let savedTheme = store ? store.getItem("theme") : null;
+      let savedMode = store ? store.getItem("mode") : null;
 
-      // If not in localStorage, use defaults
+      /* If not in localStorage, use defaults */
       if (!savedTheme) {
         savedTheme = "default";
-        store?.setItem("theme", savedTheme);
+        if (store) store.setItem("theme", savedTheme);
       }
       if (!savedMode) {
         savedMode = "system";
-        store?.setItem("mode", savedMode);
+        if (store) store.setItem("mode", savedMode);
       }
 
-      // Determine actual mode (resolve 'system' to 'light' or 'dark')
+      /* Determine actual mode (resolve 'system' to 'light' or 'dark') */
       const getActualMode = (mode) => {
         if (mode === "system") {
           return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
@@ -40,15 +40,15 @@ const { title = "10x Astro Starter" } = Astro.props;
 
       const actualMode = getActualMode(savedMode);
 
-      // Set attributes on root element before first paint (prevents FOUC)
+      /* Set attributes on root element before first paint (prevents FOUC) */
       document.documentElement.setAttribute("data-theme", savedTheme);
       document.documentElement.setAttribute("data-mode", actualMode);
       document.documentElement.style.colorScheme = actualMode === "dark" ? "dark" : "light";
 
-      // Listen to system preference changes (only if mode is 'system')
+      /* Listen to system preference changes (only if mode is 'system') */
       const darkModeQuery = window.matchMedia("(prefers-color-scheme: dark)");
       darkModeQuery.addEventListener("change", (e) => {
-        if (store?.getItem("mode") === "system") {
+        if (store && store.getItem("mode") === "system") {
           const newMode = e.matches ? "dark" : "light";
           document.documentElement.setAttribute("data-mode", newMode);
           document.documentElement.style.colorScheme = newMode === "dark" ? "dark" : "light";
@@ -64,6 +64,8 @@ const { title = "10x Astro Starter" } = Astro.props;
   <body>
     <ModeToggle client:load />
     <ThemeSelector client:load />
+    <a href="/" class="text-link">Home</a>
+    <a href="/generate" class="text-link">Generate</a>
     <slot />
   </body>
 </html>

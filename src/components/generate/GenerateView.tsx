@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { GenerateControls } from "./GenerateControls";
 import { CandidatesSection } from "./CandidatesSection";
 import { SaveSummaryModal } from "./SaveSummaryModal";
@@ -9,15 +9,17 @@ import { useCandidates } from "../hooks/use-candidates";
 import { usePagination } from "../hooks/use-pagination";
 import { useSaveFlashcards } from "../hooks/use-save-flashcards";
 import { useKeyboardShortcuts } from "../hooks/use-keyboard-shortcuts";
+import { useNavigationInterceptor } from "@/lib/useNavigationInterceptor";
 import type { CandidateVM } from "@/types";
 
 export const GenerateView: React.FC = () => {
   const [sourceText, setSourceText] = useState("");
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+  const [pendingNavigationHref, setPendingNavigationHref] = useState<string | null>(null);
   const [editingCardId, setEditingCardId] = useState<string | null>(null);
   const [focusedCardIndex, setFocusedCardIndex] = useState<number>(0);
-
+  const isNavigatingRef = useRef(false);
   // Hooki
   const { state: generationState, generate, retry } = useGeneration();
   const { candidates, setCandidates, accept, reject, getAcceptedOnly, getTotals, acceptAll } = useCandidates([]);
@@ -28,12 +30,26 @@ export const GenerateView: React.FC = () => {
 
   const totals = getTotals();
   const isGenerating = generationState.status === "loading";
-  const hasUnsavedChanges = totals.accepted > 0;
+  //   const hasUnsavedChanges = totals.accepted > 0;
+  const hasUnsavedChanges = candidates.length > 0;
   const totalPages = Math.ceil(paginationState.total / paginationState.perPage);
 
-  // Obsługa beforeunload
+  // ==========================================
+  // Obsługa linków wewnętrznych (custom modal)
+  // ==========================================
+  const handleNavigationAttempt = useCallback((href: string) => {
+    setPendingNavigationHref(href);
+    setShowUnsavedModal(true);
+  }, []);
+
+  useNavigationInterceptor(handleNavigationAttempt, hasUnsavedChanges);
+
+  // ==========================================
+  // Fallback: beforeunload dla hard cases
+  // ==========================================
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isNavigatingRef.current) return; // ← User już wybrał opcję, pozwól na nawigację
       if (!hasUnsavedChanges) return;
       e.preventDefault();
       e.returnValue = "";
@@ -43,7 +59,50 @@ export const GenerateView: React.FC = () => {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
-  // Scroll do karty z fokusem
+  // ==========================================
+  // Obsługa Unsaved Modal - Save
+  // ==========================================
+  const handleUnsavedModalSave = useCallback(async () => {
+    const acceptedCandidates = getAcceptedOnly();
+    const success = await saveFlashcards(acceptedCandidates);
+    if (success) {
+      isNavigatingRef.current = true; // ← FLAGA: Będziemy navigować
+      setCandidates([]);
+      setShowUnsavedModal(false);
+      setSourceText("");
+      setPendingNavigationHref(null);
+      // Nawiguj
+      if (pendingNavigationHref) {
+        window.location.href = pendingNavigationHref;
+      }
+    }
+  }, [saveFlashcards, getAcceptedOnly, setCandidates, pendingNavigationHref]);
+
+  // ==========================================
+  // Obsługa Unsaved Modal - Discard
+  // ==========================================
+  const handleUnsavedModalDiscard = useCallback(() => {
+    isNavigatingRef.current = true; // ← FLAGA: Będziemy navigować
+    setCandidates([]);
+    setShowUnsavedModal(false);
+    setPendingNavigationHref(null);
+    // Nawiguj bez zapisu
+    if (pendingNavigationHref) {
+      window.location.href = pendingNavigationHref;
+    }
+  }, [setCandidates, pendingNavigationHref]);
+
+  // ==========================================
+  // Obsługa Unsaved Modal - Cancel
+  // ==========================================
+  const handleUnsavedModalCancel = useCallback(() => {
+    setShowUnsavedModal(false);
+    setPendingNavigationHref(null);
+  }, []);
+
+  // ==========================================
+  // Effect: Scroll do karty z fokusem
+  // ==========================================
   useEffect(() => {
     const focusedCard = document.getElementById(`card-${focusedCardIndex}`);
     focusedCard?.scrollIntoView({
@@ -52,7 +111,9 @@ export const GenerateView: React.FC = () => {
     });
   }, [focusedCardIndex]);
 
+  // ==========================================
   // Obsługa generacji
+  // ==========================================
   const handleGenerate = useCallback(async () => {
     const result = await generate(sourceText);
     if (result) {
@@ -60,7 +121,6 @@ export const GenerateView: React.FC = () => {
     }
   }, [sourceText, generate, setCandidates]);
 
-  // Obsługa retry
   const handleRetry = useCallback(async () => {
     const result = await retry(sourceText);
     if (result) {
@@ -68,7 +128,6 @@ export const GenerateView: React.FC = () => {
     }
   }, [sourceText, retry, setCandidates]);
 
-  // Obsługa edycji kandydata
   const handleCandidateChange = useCallback(
     (updated: CandidateVM) => {
       setCandidates(candidates.map((c) => (c.localId === updated.localId ? updated : c)));
@@ -76,7 +135,9 @@ export const GenerateView: React.FC = () => {
     [candidates, setCandidates]
   );
 
-  // Obsługa zapisu
+  // ==========================================
+  // Obsługa zapisu (z SaveSummaryModal)
+  // ==========================================
   const handleConfirmSave = async () => {
     const acceptedCandidates = getAcceptedOnly();
     const success = await saveFlashcards(acceptedCandidates);
@@ -87,7 +148,9 @@ export const GenerateView: React.FC = () => {
     }
   };
 
+  // ==========================================
   // Skróty klawiaturowe
+  // ==========================================
   useKeyboardShortcuts(
     {
       onAccept: () => {
@@ -186,23 +249,13 @@ export const GenerateView: React.FC = () => {
         onCancel={() => setShowSaveModal(false)}
       />
 
-      {/* Unsaved Changes Modal */}
+      {/* Unsaved Changes Modal - dla linków wewnętrznych */}
       <UnsavedChangesModal
         isOpen={showUnsavedModal}
-        onSave={async () => {
-          await handleConfirmSave();
-          // The original code had pendingNavigation here, but it was removed from state.
-          // If the intent was to keep it, it would need to be re-added to state.
-          // For now, removing it as per the edit hint.
-        }}
-        onDiscard={() => {
-          setCandidates([]);
-          setShowUnsavedModal(false);
-          // The original code had pendingNavigation here, but it was removed from state.
-          // If the intent was to keep it, it would need to be re-added to state.
-          // For now, removing it as per the edit hint.
-        }}
-        onCancel={() => setShowUnsavedModal(false)}
+        onSave={handleUnsavedModalSave}
+        onDiscard={handleUnsavedModalDiscard}
+        onCancel={handleUnsavedModalCancel}
+        isLoading={saveState.status === "loading"}
       />
 
       {/* Keyboard Shortcuts Hint */}

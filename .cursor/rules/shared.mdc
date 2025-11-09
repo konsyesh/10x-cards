@@ -14,6 +14,7 @@ transform the text they enter (copy-paste) into high-quality flashcards for lear
 
 - Astro 5
 - TypeScript 5
+- Zod 3.25
 - React 19
 - Tailwind 4
 - Shadcn/ui
@@ -31,7 +32,8 @@ When introducing changes to the project, always follow the directory structure b
 - `./src/types.ts` - Shared types for backend and frontend (Entities, DTOs)
 - `./src/components` - Client-side components written in Astro (static) and React (dynamic)
 - `./src/components/ui` - Client-side components from Shadcn/ui
-- `./src/lib` - Services and helpers
+- `./src/lib` - libs and helpers
+- `./src/services` - Services for domains
 - `./src/assets` - static internal assets
 - `./public` - public assets
 

@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
 import { DEFAULT_USER_ID } from "../../db/supabase.client";
-import { FlashcardService } from "../../lib/services/flashcard.service";
+import { FlashcardService } from "../../services/flashcard/flashcard.service";
 import { validateBody } from "../../lib/http/http.validate-body";
 import { successResponse } from "../../lib/http/http.responses";
 import { notFound, serviceUnavailable, internalError } from "../../lib/http/http.errors";
@@ -11,7 +11,7 @@ import {
   CollectionNotFoundError,
   CollectionAccessError,
   SchedulerError,
-} from "../../lib/errors/flashcard.errors";
+} from "../../services/flashcard/flashcard.errors";
 
 import type { CreateFlashcardsCommand, CreateFlashcardsResponseDTO } from "../../types";
 

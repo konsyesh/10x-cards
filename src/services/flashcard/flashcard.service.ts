@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "../../db/supabase.client";
 import type { CreateFlashcardsCommand, FlashcardDTO, CreateFlashcardItemCommand } from "../../types";
 import type { FlashcardRow } from "../../types";
-import { GenerationNotFoundError, CollectionNotFoundError, CollectionAccessError } from "../errors/flashcard.errors";
+import { GenerationNotFoundError, CollectionNotFoundError, CollectionAccessError } from "./flashcard.errors";
 
 /**
  * Serwis do obsługi operacji flashcard'ów

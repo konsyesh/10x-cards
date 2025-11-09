@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
 import { DEFAULT_USER_ID } from "../../db/supabase.client";
-import { GenerationService } from "../../lib/services/generation.service";
+import { GenerationService } from "../../services/generation/generation.service";
 import { validateBody } from "../../lib/http/http.validate-body";
 import { successResponse } from "../../lib/http/http.responses";
 import {

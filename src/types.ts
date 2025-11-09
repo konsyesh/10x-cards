@@ -407,7 +407,11 @@ export type ApiErrorCode =
   | "UNPROCESSABLE_ENTITY"
   | "RATE_LIMIT_EXCEEDED"
   | "SERVICE_UNAVAILABLE"
-  | "GATEWAY_TIMEOUT";
+  | "GATEWAY_TIMEOUT"
+  | "NETWORK_ERROR"
+  | "UNKNOWN_ERROR"
+  // RFC 7807 domain/code format (np. "flashcard/not-found", "generation/timeout")
+  | string;
 
 /**
  * ============================================================================

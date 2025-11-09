@@ -17,11 +17,9 @@ import { z } from "zod";
 import { DEFAULT_USER_ID } from "@/db/supabase.client";
 import { GenerationService } from "@/services/generation/generation.service";
 import { validateBody } from "@/lib/http/http.validate-body";
-import { createdResponse, successResponse } from "@/lib/http/http.responses";
+import { successResponse } from "@/lib/http/http.responses";
 import { withProblemHandling } from "@/lib/errors/http";
 import { generationErrors } from "@/services/generation/generation.errors";
-import { flashcardErrors } from "@/services/flashcard/flashcard.errors";
-import type { CreateGenerationCommand } from "@/types";
 
 export const prerender = false;
 
@@ -41,12 +39,9 @@ const createGenerationCommandSchema = z.object({
     .describe("Tekst źródłowy do analizy (1000-50000 znaków)"),
 
   model: z
-    .enum(SUPPORTED_MODELS, {
-      errorMap: () => ({
-        message: `Obsługiwany model to: ${SUPPORTED_MODELS.join(", ")}`,
-      }),
-    })
-    .default("gpt-4o-mini")
+    .enum(SUPPORTED_MODELS)
+    .optional()
+    .transform((m) => m ?? ("gpt-4o-mini" as const))
     .describe("Model LLM do użycia w generowaniu"),
 });
 
@@ -99,11 +94,14 @@ export const POST: APIRoute = withProblemHandling(async ({ request, locals }) =>
   }
 
   // Walidacja body (rzuca DomainError jeśli fail)
-  const commandData: CreateGenerationCommand = await validateBody(request, createGenerationCommandSchema);
+  const commandData = await validateBody(request, createGenerationCommandSchema);
 
   try {
     const generationService = new GenerationService(locals.supabase, userId);
-    const generationResponse = await generationService.createGeneration(commandData);
+    const generationResponse = await generationService.createGeneration({
+      source_text: commandData.source_text,
+      model: commandData.model ?? "gpt-4o-mini",
+    });
 
     return successResponse(generationResponse);
   } catch (err) {

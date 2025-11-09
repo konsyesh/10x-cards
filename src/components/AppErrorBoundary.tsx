@@ -1,84 +1,64 @@
 /**
  * src/components/AppErrorBoundary.tsx
  *
- * React Error Boundary dla obsługi błędów komponentów
- * Łapie błędy w całym poddrzewie komponentów i wyświetla fallback UI
+ * React 19 Error Boundary do obsługi błędów w komponentach
+ * Łapie niezaobsługiwane błędy i wyświetla fallback UI
  */
 
 import React from "react";
 
-interface Props {
+interface AppErrorBoundaryProps {
+  /** Elementy do monitorowania */
   children: React.ReactNode;
+  /** Fallback UI w przypadku błędu */
   fallback?: React.ReactNode;
+  /** Callback do obsługi błędu (np. logowanie) */
+  onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
 }
 
-interface State {
+interface AppErrorBoundaryState {
   hasError: boolean;
   error?: Error;
 }
 
 /**
- * Error Boundary - łapie błędy w poddrzewie React
- * Wyświetla fallback UI zamiast białego ekranu
+ * Error Boundary komponent
+ * Łapie JavaScript errors wewnątrz subtree i wyświetla fallback UI
+ *
+ * @example
+ * <AppErrorBoundary
+ *   fallback={<p>Coś poszło nie tak</p>}
+ *   onError={(err, info) => console.error("Error:", err, info)}
+ * >
+ *   <MyComponent />
+ * </AppErrorBoundary>
  */
-export class AppErrorBoundary extends React.Component<Props, State> {
-  constructor(props: Props) {
+export class AppErrorBoundary extends React.Component<AppErrorBoundaryProps, AppErrorBoundaryState> {
+  constructor(props: AppErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): AppErrorBoundaryState {
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log do console w dev mode
-    console.error("[AppErrorBoundary]", {
-      error,
-      errorInfo,
-      timestamp: new Date().toISOString(),
-    });
+    // Loguj do konsoli
+    // eslint-disable-next-line no-console
+    console.error("[AppErrorBoundary] Error caught:", error, errorInfo);
 
-    // W production moglibyśmy wysłać do Sentry
-    // if (import.meta.env.PROD) {
-    //   Sentry.captureException(error, { contexts: { react: errorInfo } });
-    // }
+    // Callback dla custom obsługi (np. Sentry)
+    this.props.onError?.(error, errorInfo);
   }
 
   render() {
     if (this.state.hasError) {
       return (
         this.props.fallback ?? (
-          <div
-            style={{
-              padding: "2rem",
-              textAlign: "center",
-              borderRadius: "0.5rem",
-              backgroundColor: "#fee2e2",
-              borderColor: "#fecaca",
-              borderWidth: "1px",
-            }}
-          >
-            <h2 style={{ color: "#991b1b", marginBottom: "0.5rem" }}>
-              Coś poszło nie tak
-            </h2>
-            <p style={{ color: "#7f1d1d", fontSize: "0.875rem" }}>
-              {this.state.error?.message || "Nieznany błąd"}
-            </p>
-            <button
-              onClick={() => window.location.reload()}
-              style={{
-                marginTop: "1rem",
-                padding: "0.5rem 1rem",
-                backgroundColor: "#dc2626",
-                color: "white",
-                border: "none",
-                borderRadius: "0.375rem",
-                cursor: "pointer",
-              }}
-            >
-              Odśwież stronę
-            </button>
+          <div className="rounded-md border border-red-200 bg-red-50 p-4">
+            <h2 className="text-lg font-semibold text-red-800">Coś poszło nie tak</h2>
+            <p className="mt-2 text-sm text-red-700">{this.state.error?.message ?? "Nieznany błąd"}</p>
           </div>
         )
       );
@@ -87,4 +67,3 @@ export class AppErrorBoundary extends React.Component<Props, State> {
     return this.props.children;
   }
 }
-

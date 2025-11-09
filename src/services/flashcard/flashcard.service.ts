@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "../../db/supabase.client";
 import type { CreateFlashcardsCommand, FlashcardDTO, CreateFlashcardItemCommand } from "../../types";
 import type { FlashcardRow } from "../../types";
-import { GenerationNotFoundError, CollectionNotFoundError, CollectionAccessError } from "./flashcard.errors";
+import { flashcardErrors } from "./flashcard.errors";
 
 /**
  * Serwis do obsługi operacji flashcard'ów
@@ -50,7 +50,10 @@ export class FlashcardService {
       .select();
 
     if (insertError || !savedFlashcards) {
-      throw new Error(`Failed to save flashcards: ${insertError?.message}`);
+      throw flashcardErrors.creators.DatabaseError({
+        detail: `Failed to save flashcards: ${insertError?.message}`,
+        cause: insertError,
+      });
     }
 
     // Warunkowa aktualizacja metryki generations (liczniki akceptacji)
@@ -82,7 +85,10 @@ export class FlashcardService {
 
       // Jeśli nie znaleziono lub należy do innego użytkownika → 404 (nie ujawniać informacji)
       if (!generation || generation.user_id !== this.userId) {
-        throw new GenerationNotFoundError(genId);
+        throw flashcardErrors.creators.GenerationNotFound({
+          detail: `Generation ${genId} not found or access denied`,
+          meta: { generationId: genId },
+        });
       }
     }
   }
@@ -98,11 +104,17 @@ export class FlashcardService {
       .single();
 
     if (error || !data) {
-      throw new CollectionNotFoundError(collectionId);
+      throw flashcardErrors.creators.CollectionNotFound({
+        detail: `Collection ${collectionId} not found`,
+        meta: { collectionId },
+      });
     }
 
     if (data.user_id !== this.userId) {
-      throw new CollectionAccessError();
+      throw flashcardErrors.creators.CollectionAccessDenied({
+        detail: `Access denied to collection ${collectionId}`,
+        meta: { collectionId },
+      });
     }
   }
 

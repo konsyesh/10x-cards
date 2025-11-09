@@ -1,6 +1,8 @@
 import { createHash } from "crypto";
 import type { CreateGenerationCommand, GenerationResponseDTO, GeneratedFlashcardCandidateDTO } from "../../types";
 import type { SupabaseClient } from "../../db/supabase.client";
+import { generationErrors } from "./generation.errors";
+import { fromSupabase } from "@/lib/errors/map-supabase";
 
 /**
  * Serwis do zarządzania sesją generowania flashcard'ów
@@ -101,7 +103,11 @@ export class GenerationService {
     if (createError || !generationRecord) {
       // eslint-disable-next-line no-console
       console.error("[Generation Service] Database error on create:", createError);
-      throw new Error("GENERATION_CREATE_FAILED");
+      throw generationErrors.creators.ProviderError({
+        detail: "Failed to create generation record",
+        meta: { error: createError?.message },
+        cause: createError,
+      });
     }
 
     const generationId = generationRecord.id;
@@ -139,7 +145,11 @@ export class GenerationService {
       if (updateError) {
         // eslint-disable-next-line no-console
         console.error("[Generation Service] Database error on update:", updateError);
-        throw new Error("GENERATION_UPDATE_FAILED");
+        throw generationErrors.creators.ProviderError({
+          detail: "Failed to update generation record",
+          meta: { error: updateError?.message },
+          cause: updateError,
+        });
       }
 
       // Krok 5: Zwrócenie Response DTO

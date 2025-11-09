@@ -11,6 +11,7 @@ import { useSaveFlashcards } from "../hooks/use-save-flashcards";
 import { useKeyboardShortcuts } from "../hooks/use-keyboard-shortcuts";
 import { useNavigationInterceptor } from "@/lib/useNavigationInterceptor";
 import type { CandidateVM } from "@/types";
+import { toast } from "sonner";
 
 export const GenerateView: React.FC = () => {
   const [sourceText, setSourceText] = useState("");
@@ -58,6 +59,32 @@ export const GenerateView: React.FC = () => {
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [hasUnsavedChanges]);
+
+  // ==========================================
+  // Obsługa toast'ów na zmiany saveState
+  // ==========================================
+  useEffect(() => {
+    if (saveState.status === "success" && saveState.message) {
+      toast.success("Sukces", {
+        description: saveState.message, // "Pomyślnie zapisano X fiszek"
+      });
+    }
+  }, [saveState.status, saveState.message]);
+
+  useEffect(() => {
+    if (saveState.status === "error" && saveState.message) {
+      toast.error("Błąd przy zapisywaniu", {
+        description: saveState.message,
+      });
+      // Opcjonalnie — logi diagnostyczne
+      if (saveState.errorCode) {
+        console.error("[GenerateView] Save error:", {
+          code: saveState.errorCode,
+          message: saveState.message,
+        });
+      }
+    }
+  }, [saveState.status, saveState.errorCode, saveState.message]);
 
   // ==========================================
   // Obsługa Unsaved Modal - Save

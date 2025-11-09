@@ -1,62 +1,45 @@
 /**
- * Błąd walidacji karty
+ * src/services/flashcard/flashcard.errors.ts
+ *
+ * Domainowe błędy dla domeny flashcard
  */
-export class FlashcardValidationError extends Error {
-  constructor(
-    public field: string,
-    message: string
-  ) {
-    super(message);
-    this.name = "FlashcardValidationError";
-  }
-}
 
-/**
- * Błąd - sesja generowania nie znaleziona lub należy do innego użytkownika
- */
-export class GenerationNotFoundError extends Error {
-  constructor(generationId: number) {
-    super(`Generation ${generationId} not found`);
-    this.name = "GenerationNotFoundError";
-  }
-}
+import { defineDomain } from "@/lib/errors/registry";
 
-/**
- * Błąd - sesja generowania jest zamknięta
- */
-export class GenerationClosedError extends Error {
-  constructor(generationId: number) {
-    super(`Generation ${generationId} is already closed`);
-    this.name = "GenerationClosedError";
-  }
-}
-
-/**
- * Błąd - kolekcja nie znaleziona
- */
-export class CollectionNotFoundError extends Error {
-  constructor(collectionId: number) {
-    super(`Collection ${collectionId} not found`);
-    this.name = "CollectionNotFoundError";
-  }
-}
-
-/**
- * Błąd - brak dostępu do kolekcji (403)
- */
-export class CollectionAccessError extends Error {
-  constructor() {
-    super("Access denied to this collection");
-    this.name = "CollectionAccessError";
-  }
-}
-
-/**
- * Błąd - usługa scheduler niedostępna
- */
-export class SchedulerError extends Error {
-  constructor(message = "Scheduler service unavailable") {
-    super(message);
-    this.name = "SchedulerError";
-  }
-}
+export const flashcardErrors = defineDomain("flashcard", {
+  NotFound: {
+    code: "flashcard/not-found",
+    status: 404,
+    title: "errors.flashcard.not_found",
+  },
+  ValidationFailed: {
+    code: "flashcard/validation-failed",
+    status: 400,
+    title: "errors.flashcard.validation_failed",
+  },
+  DatabaseError: {
+    code: "flashcard/database-error",
+    status: 500,
+    title: "errors.flashcard.database_error",
+  },
+  GenerationNotFound: {
+    code: "flashcard/generation-not-found",
+    status: 404,
+    title: "errors.flashcard.generation_not_found",
+  },
+  CollectionNotFound: {
+    code: "flashcard/collection-not-found",
+    status: 404,
+    title: "errors.flashcard.collection_not_found",
+  },
+  CollectionAccessDenied: {
+    code: "flashcard/collection-access-denied",
+    status: 404, // 404 zamiast 403, żeby nie ujawniać istnienia cudzych kolekcji
+    title: "errors.flashcard.collection_access_denied",
+  },
+  SchedulerUnavailable: {
+    code: "flashcard/scheduler-unavailable",
+    status: 503,
+    title: "errors.flashcard.scheduler_unavailable",
+  },
+});

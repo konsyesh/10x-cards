@@ -8,6 +8,8 @@
     "preview": "astro preview",
     "astro": "astro",
     "seed-user": "node --env-file=.env ./supabase/local-tools/dev_seed_user.mjs",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write ."
@@ -88,7 +90,8 @@
     "lint-staged": "15.5.0",
     "prettier-plugin-astro": "0.14.1",
     "supabase": "^2.51.0",
-    "typescript-eslint": "8.28.0"
+    "typescript-eslint": "8.28.0",
+    "vitest": "^4.0.7"
   },
   "lint-staged": {
     "*.{ts,tsx,astro}": [

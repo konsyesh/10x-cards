@@ -1,16 +1,26 @@
+/**
+ * POST /api/generations
+ *
+ * Tworzy nową sesję generowania flashcard'ów z tekstu źródłowego
+ * Inicjuje przetwarzanie tekstu za pośrednictwem AI i zwraca wygenerowanych kandydatów
+ *
+ * Autoryzacja: Wymaga JWT (będzie zweryfikowany w middleware)
+ * Rate limit: 5 żądań na minutę na użytkownika
+ *
+ * @endpoint POST /api/generations
+ * @body CreateGenerationCommand { source_text, model }
+ * @returns GenerationResponseDTO (201 Created)
+ */
+
 import type { APIRoute } from "astro";
 import { z } from "zod";
-import { DEFAULT_USER_ID } from "../../db/supabase.client";
-import { GenerationService } from "../../services/generation/generation.service";
-import { validateBody } from "../../lib/http/http.validate-body";
-import { successResponse } from "../../lib/http/http.responses";
-import {
-  rateLimitExceeded,
-  serviceUnavailable,
-  llmUnavailable,
-  llmTimeout,
-  internalError,
-} from "../../lib/http/http.errors";
+import { DEFAULT_USER_ID } from "@/db/supabase.client";
+import { GenerationService } from "@/services/generation/generation.service";
+import { validateBody } from "@/lib/http/http.validate-body";
+import { createdResponse, successResponse } from "@/lib/http/http.responses";
+import { withProblemHandling } from "@/lib/errors/http";
+import { generationErrors } from "@/services/generation/generation.errors";
+import { flashcardErrors } from "@/services/flashcard/flashcard.errors";
 import type { CreateGenerationCommand } from "@/types";
 
 export const prerender = false;
@@ -22,9 +32,6 @@ const SUPPORTED_MODELS = ["gpt-4o-mini"] as const;
 
 /**
  * Zod schema do walidacji komendy tworzenia sesji generowania
- * Sprawdza:
- * - source_text: 1000-50000 znaków, wymagane, string
- * - model: z whitelist obsługiwanych modeli
  */
 const createGenerationCommandSchema = z.object({
   source_text: z
@@ -58,17 +65,11 @@ const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 60 sekund
 
 /**
  * Sprawdza rate limit dla użytkownika
- * Zwraca true jeśli użytkownik może wykonać żądanie
- * Zwraca false jeśli limit został przekroczony
- *
- * @param userId - ID użytkownika
- * @returns boolean - Czy żądanie jest dozwolone
  */
 function checkRateLimit(userId: string): boolean {
   const now = new Date();
   const userLimit = rateLimitMap.get(userId);
 
-  // Jeśli nie ma limitu lub wygasł - reset
   if (!userLimit || now > userLimit.resetAt) {
     rateLimitMap.set(userId, {
       count: 1,
@@ -77,100 +78,41 @@ function checkRateLimit(userId: string): boolean {
     return true;
   }
 
-  // Sprawdzenie czy nie przekroczono limitu
   if (userLimit.count >= RATE_LIMIT_REQUESTS) {
     return false;
   }
 
-  // Inkrementacja licznika
   userLimit.count += 1;
   return true;
 }
 
-/**
- * POST /api/generations
- *
- * Tworzy nową sesję generowania flashcard'ów z tekstu źródłowego
- * Inicjuje przetwarzanie tekstu za pośrednictwem AI i zwraca wygenerowanych kandydatów
- *
- * Autoryzacja: Wymaga JWT (będzie zweryfikowany w middleware)
- * Rate limit: 5 żądań na minutę na użytkownika
- *
- * @endpoint POST /api/generations
- * @body CreateGenerationCommand { source_text, model }
- * @returns GenerationResponseDTO (201 Created)
- *
- * @example
- * POST /api/generations
- * {
- *   "source_text": "Long text content...",
- *   "model": "gpt-4o-mini"
- * }
- *
- * Response 201:
- * {
- *   "data": {
- *     "generation_id": 1,
- *     "status": "completed",
- *     "model": "gpt-4o-mini",
- *     "generated_count": 5,
- *     "generation_duration_ms": 1200,
- *     "flashcards_candidates": [...],
- *     "message": "Wygenerowano 5 flashcard'ów."
- *   },
- *   "meta": { "timestamp": "...", "status": "success" }
- * }
- */
-export const POST: APIRoute = async ({ url, request, locals }) => {
-  // TODO: Na etapie wdrażania middleware JWT będzie weryfikować token
-  // Dla teraz używamy DEFAULT_USER_ID
+export const POST: APIRoute = withProblemHandling(async ({ request, locals }) => {
   const userId = DEFAULT_USER_ID;
-  const instance = url.pathname; // np. "/api/generations"
 
-  // Krok 1: Rate limiting check
+  // Rate limiting check - rzuć DomainError jeśli limit przekroczony
   if (!checkRateLimit(userId)) {
-    return rateLimitExceeded(instance);
+    throw generationErrors.creators.ProviderError({
+      detail: "Limit żądań przekroczony. Maksymalnie 5 żądań na minutę.",
+      cause: new Error("RATE_LIMIT_EXCEEDED"),
+    });
+    // Note: withProblemHandling zmieni status na 429
   }
 
-  // Krok 2: Walidacja JSON body + schema
-  const validation = await validateBody(request, createGenerationCommandSchema, instance);
-  if (!validation.success) {
-    return validation.response as Response;
-  }
-
-  // Krok 3: Tworzenie serwisu generowania i przetwarzanie żądania
-  const generationService = new GenerationService(locals.supabase, userId);
+  // Walidacja body (rzuca DomainError jeśli fail)
+  const commandData: CreateGenerationCommand = await validateBody(request, createGenerationCommandSchema);
 
   try {
-    const generationResponse = await generationService.createGeneration(validation.data as CreateGenerationCommand);
+    const generationService = new GenerationService(locals.supabase, userId);
+    const generationResponse = await generationService.createGeneration(commandData);
 
-    // Krok 4: Zwrócenie sukcesu (201 Created)
-    return successResponse(generationResponse, 201);
-  } catch (error) {
-    // Obsługa błędów z serwisu generowania
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-
-    // eslint-disable-next-line no-console
-    console.error("[POST /api/generations]", {
-      userId,
-      timestamp: new Date().toISOString(),
-      error: errorMessage,
-    });
-
-    // Mapowanie błędów na odpowiednie kody HTTP
-    if (errorMessage === "GENERATION_CREATE_FAILED" || errorMessage === "GENERATION_UPDATE_FAILED") {
-      return serviceUnavailable(instance); // 503
+    return successResponse(generationResponse);
+  } catch (err) {
+    // Jeśli już to DomainError - propaguj
+    if (err instanceof Error && "code" in err) {
+      throw err;
     }
 
-    if (errorMessage === "LLM_SERVICE_UNAVAILABLE") {
-      return llmUnavailable(instance); // 503
-    }
-
-    if (errorMessage === "LLM_GENERATION_FAILED" || errorMessage === "LLM_TIMEOUT") {
-      return llmTimeout(instance); // 504
-    }
-
-    // Ogólny błąd serwera
-    return internalError(instance); // 500
+    // Fallback - rzuć aby withProblemHandling go obsłużył
+    throw err;
   }
-};
+});

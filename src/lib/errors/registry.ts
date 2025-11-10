@@ -26,9 +26,9 @@ export function defineDomain<D extends string, K extends string>(domain: D, defs
       (opts?: { detail?: string; meta?: Record<string, unknown>; cause?: unknown }): DomainError =>
         createDomainError({
           domain: domain as Domain,
-          code: def.code,
-          status: def.status,
-          title: def.title,
+          code: (def as Definition).code,
+          status: (def as Definition).status,
+          title: (def as Definition).title,
           message: opts?.detail,
           meta: opts?.meta,
           cause: opts?.cause,

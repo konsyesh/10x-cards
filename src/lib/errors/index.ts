@@ -5,7 +5,7 @@
  * Definiuje typy DomainError i ProblemDetails dla ustandaryzowanego formatu odpowiedzi.
  */
 
-export type Domain = "flashcard" | "generation" | "auth" | "system";
+export type Domain = "flashcard" | "generation" | "auth" | "system" | "ai";
 
 /**
  * Domenowy błąd wewnętrzny (wewnątrz serwera)

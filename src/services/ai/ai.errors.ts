@@ -73,4 +73,3 @@ export const aiErrors = defineDomain("ai", {
     title: "errors.ai.retry_exhausted",
   },
 });
-

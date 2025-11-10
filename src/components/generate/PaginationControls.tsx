@@ -25,8 +25,7 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border bg-card p-4">
       <div className="text-sm font-medium text-muted-foreground">
-        Strona <span className="font-semibold">{state.page}</span> z{" "}
-        <span className="font-semibold">{totalPages}</span>
+        Strona <span className="font-semibold">{state.page}</span> z <span className="font-semibold">{totalPages}</span>
         {state.total > 0 && (
           <>
             {" "}

@@ -18,12 +18,12 @@ import { aiErrors } from "./ai.errors";
 /**
  * Kontrakt loggera (minimalny)
  */
-export type Logger = {
+export interface Logger {
   debug: (msg: string, meta?: unknown) => void;
   info: (msg: string, meta?: unknown) => void;
   warn: (msg: string, meta?: unknown) => void;
   error: (msg: string, meta?: unknown) => void;
-};
+}
 
 /**
  * Schematy Zod dla konfiguracji
@@ -57,14 +57,14 @@ export type AIServiceConfig = z.infer<typeof AIServiceConfigSchema>;
 export type AIModelParams = z.infer<typeof AIModelParamsSchema>;
 export type RetryPolicy = z.infer<typeof RetryPolicySchema>;
 
-export type GenerateObjectOptions<T> = {
+export interface GenerateObjectOptions<T> {
   system?: string;
   user?: string;
   model?: string;
   params?: Partial<AIModelParams>;
   schema?: z.ZodType<T>;
   timeoutMs?: number;
-};
+}
 
 /**
  * AIService - Główna klasa serwisu
@@ -75,7 +75,7 @@ export class AIService {
   private currentParams: AIModelParams;
   private systemPrompt?: string;
   private userPrompt?: string;
-  private schema?: z.ZodType<any>;
+  private schema?: z.ZodType<unknown>;
   private headers: Record<string, string>;
   private timeoutMs: number;
   private retryPolicy: RetryPolicy;
@@ -405,7 +405,7 @@ export class AIService {
   /**
    * PRIVATE: Wymaganie schematu - rzuca błąd jeśli brak
    */
-  private requireSchema(): z.ZodType<any> {
+  private requireSchema(): z.ZodType<unknown> {
     if (!this.schema) {
       throw aiErrors.creators.SchemaError({
         detail: "Schema jest wymagana dla generateObject",
@@ -482,7 +482,7 @@ export class AIService {
 
       // Mapowanie błędów od providera
       if (err && typeof err === "object") {
-        const errObj = err as any;
+        const errObj = err as Record<string, unknown>;
 
         // Rate limit
         if (errObj.status === 429 || errObj.code === "rate_limit_exceeded") {
@@ -541,7 +541,7 @@ export class AIService {
    * PRIVATE: Retry z exponential backoff
    */
   private async retryWithBackoff<T>(fn: () => Promise<T>): Promise<T> {
-    let lastError: unknown;
+    let lastError: Record<string, unknown> | undefined;
 
     for (let attempt = 0; attempt <= this.retryPolicy.maxRetries; attempt++) {
       try {
@@ -552,12 +552,7 @@ export class AIService {
         // Nie retry domenowych błędów poza retryable
         if (err && typeof err === "object" && "code" in err) {
           const code = (err as any).code;
-          const retryable = [
-            "ai/rate-limited",
-            "ai/timeout",
-            "ai/provider-error",
-            "ai/service-unavailable",
-          ];
+          const retryable = ["ai/rate-limited", "ai/timeout", "ai/provider-error", "ai/service-unavailable"];
 
           if (!retryable.includes(code)) {
             throw err;
@@ -596,10 +591,7 @@ export class AIService {
    * PRIVATE: Obliczenie exponential backoff z jitter
    */
   private calculateBackoff(attempt: number): number {
-    const base = Math.min(
-      this.retryPolicy.baseDelayMs * Math.pow(2, attempt),
-      this.retryPolicy.maxDelayMs
-    );
+    const base = Math.min(this.retryPolicy.baseDelayMs * Math.pow(2, attempt), this.retryPolicy.maxDelayMs);
 
     if (!this.retryPolicy.jitter) {
       return base;
@@ -644,7 +636,7 @@ export class AIService {
         throw aiErrors.creators.ValidationFailed({
           detail: "Output validation failed",
           meta: { errors: err.flatten() },
-          cause: err,
+          cause: err as Record<string, unknown>,
         });
       }
       throw err;
@@ -658,10 +650,7 @@ export class AIService {
     if (!input) return input;
 
     // Maskowanie email
-    const emailMasked = input.replace(
-      /[\w.-]+@[\w.-]+\.\w+/g,
-      "[EMAIL]"
-    );
+    const emailMasked = input.replace(/[\w.-]+@[\w.-]+\.\w+/g, "[EMAIL]");
 
     // Maskowanie długich ciągów (prompty)
     if (emailMasked.length > 100) {
@@ -671,4 +660,3 @@ export class AIService {
     return emailMasked;
   }
 }
-

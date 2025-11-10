@@ -23,5 +23,3 @@ export const authErrors = defineDomain("auth", {
     title: "errors.auth.invalid_credentials",
   },
 });
-
-

@@ -36,8 +36,8 @@ export async function example1_basicFlashcardGeneration() {
     })
     .setSystemPrompt(
       "Jesteś asystentem do generowania fiszek edukacyjnych. " +
-      "Odpowiadasz WYŁĄCZNIE w JSON zgodnym ze schematem. " +
-      "Fiszki powinny być krótkie i precyzyjne."
+        "Odpowiadasz WYŁĄCZNIE w JSON zgodnym ze schematem. " +
+        "Fiszki powinny być krótkie i precyzyjne."
     )
     .setSchema(FlashcardSchema);
 
@@ -47,13 +47,11 @@ export async function example1_basicFlashcardGeneration() {
     Zawierają własne DNA i rybosom. Reprodukują się przez podział...
   `;
 
-  aiService.setUserPrompt(
-    `Stwórz do 8 fiszek edukacyjnych z poniższego tekstu:\n\n${sourceText}`
-  );
+  aiService.setUserPrompt(`Stwórz do 8 fiszek edukacyjnych z poniższego tekstu:\n\n${sourceText}`);
 
   try {
     const { flashcards } = await aiService.generateObject<{
-      flashcards: Array<{ front: string; back: string }>;
+      flashcards: { front: string; back: string }[];
     }>();
 
     console.log("Wygenerowane fiszki:", flashcards);
@@ -112,10 +110,7 @@ export async function example3_errorHandling() {
   });
 
   try {
-    const result = await aiService
-      .setUserPrompt("Wygeneruj dane dla modelu")
-      .setSchema(schema)
-      .generateObject();
+    const result = await aiService.setUserPrompt("Wygeneruj dane dla modelu").setSchema(schema).generateObject();
 
     console.log("Success:", result);
     return result;
@@ -177,10 +172,7 @@ export async function example4_batchConfiguration() {
   // Teraz można używać bez konfiguracji per-call
   const schema = z.object({ result: z.string() });
 
-  const result = await aiService
-    .setUserPrompt("Test prompt")
-    .setSchema(schema)
-    .generateObject();
+  const result = await aiService.setUserPrompt("Test prompt").setSchema(schema).generateObject();
 
   console.log("Result:", result);
   return result;
@@ -210,10 +202,7 @@ export async function example5_withLogger() {
 
   const schema = z.object({ output: z.string() });
 
-  const result = await aiService
-    .setUserPrompt("Wygeneruj coś")
-    .setSchema(schema)
-    .generateObject();
+  const result = await aiService.setUserPrompt("Wygeneruj coś").setSchema(schema).generateObject();
 
   return result;
 }
@@ -272,11 +261,7 @@ export async function example8_reusingService() {
   });
 
   // Wykorzystaj wiele razy z innymi promptami
-  const topics = [
-    "Historia",
-    "Matematyka",
-    "Fizyka",
-  ];
+  const topics = ["Historia", "Matematyka", "Fizyka"];
 
   const results = [];
 
@@ -302,10 +287,7 @@ export async function example9_errorMapping() {
   const schema = z.object({ data: z.string() });
 
   try {
-    await aiService
-      .setUserPrompt("test")
-      .setSchema(schema)
-      .generateObject();
+    await aiService.setUserPrompt("test").setSchema(schema).generateObject();
   } catch (err) {
     if (isDomainError(err)) {
       // Mapa HTTP status -> akcja
@@ -328,8 +310,7 @@ export async function example9_errorMapping() {
  */
 export function createProductionAIService() {
   const logger = {
-    debug: (msg: string, meta?: unknown) =>
-      process.env.DEBUG && console.debug(msg, meta),
+    debug: (msg: string, meta?: unknown) => process.env.DEBUG && console.debug(msg, meta),
     info: (msg: string, meta?: unknown) => console.info(msg, meta),
     warn: (msg: string, meta?: unknown) => console.warn(msg, meta),
     error: (msg: string, meta?: unknown) => console.error(msg, meta),
@@ -369,4 +350,3 @@ export function createProductionAIService() {
  * 7. Używaj fluent API dla czytelności
  * 8. Cache/reuse AIService gdzie możliwe
  */
-

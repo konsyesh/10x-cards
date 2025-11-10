@@ -29,13 +29,7 @@ export const GenerateControls: React.FC<GenerateControlsProps> = ({
 
   return (
     <div className="space-y-4">
-      <SourceTextarea
-        value={sourceText}
-        onChange={onSourceChange}
-        isValid={isValid}
-        min={min}
-        max={max}
-      />
+      <SourceTextarea value={sourceText} onChange={onSourceChange} isValid={isValid} min={min} max={max} />
 
       <div className="flex justify-end">
         <GenerateButton

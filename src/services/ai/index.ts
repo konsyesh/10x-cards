@@ -5,18 +5,8 @@
  */
 
 export { AIService } from "./ai.service";
-export type {
-  AIServiceConfig,
-  AIModelParams,
-  RetryPolicy,
-  GenerateObjectOptions,
-  Logger,
-} from "./ai.service";
-export {
-  AIServiceConfigSchema,
-  AIModelParamsSchema,
-  RetryPolicySchema,
-} from "./ai.service";
+export type { AIServiceConfig, AIModelParams, RetryPolicy, GenerateObjectOptions, Logger } from "./ai.service";
+export { AIServiceConfigSchema, AIModelParamsSchema, RetryPolicySchema } from "./ai.service";
 
 export { aiErrors } from "./ai.errors";
 
@@ -37,4 +27,3 @@ export type { Logger } from "./ai.service";
 
 // Reeksport z mapowań błędów dla convenience
 export { fromAISDK } from "@/lib/errors/map-ai-sdk";
-

@@ -33,5 +33,3 @@ export const generationErrors = defineDomain("generation", {
     title: "errors.generation.timeout",
   },
 });
-
-

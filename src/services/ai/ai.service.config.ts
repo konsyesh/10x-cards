@@ -184,7 +184,7 @@ export const AIServicePresets = {
     return new AIService(createProdConfig(logger))
       .setSystemPrompt(
         "Jesteś asystentem do generowania fiszek edukacyjnych. " +
-        "Odpowiadasz WYŁĄCZNIE w JSON ze schematem: { flashcards: [{front, back}, ...] }"
+          "Odpowiadasz WYŁĄCZNIE w JSON ze schematem: { flashcards: [{front, back}, ...] }"
       )
       .setParameters({ temperature: 0.2, maxTokens: 2000 });
   },
@@ -194,10 +194,7 @@ export const AIServicePresets = {
    */
   analysis: (logger?: Logger) => {
     return new AIService(createHighPerfConfig(logger))
-      .setSystemPrompt(
-        "Jesteś ekspertem w analizie tekstu. " +
-        "Odpowiadaj precyzyjnie i zwięźle. JSON tylko."
-      )
+      .setSystemPrompt("Jesteś ekspertem w analizie tekstu. " + "Odpowiadaj precyzyjnie i zwięźle. JSON tylko.")
       .setParameters({ temperature: 0.1 });
   },
 
@@ -262,4 +259,3 @@ export function loadLogger(): Logger | undefined {
  * // Auto-detect environment
  * const service = createAIService(undefined, loadLogger());
  */
-

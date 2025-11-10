@@ -4,10 +4,9 @@
  * Testy jednostkowe dla AIService
  */
 
-import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { z } from "zod";
 import { AIService, AIServiceConfigSchema, AIModelParamsSchema, RetryPolicySchema } from "./ai.service";
-import { aiErrors } from "./ai.errors";
 
 describe("AIService", () => {
   describe("Konstruktor i walidacja konfiguracji", () => {
@@ -124,11 +123,8 @@ describe("AIService", () => {
   });
 
   describe("Walidacja schematu Zod", () => {
-    let service: AIService;
-
     beforeEach(() => {
       process.env.OPENROUTER_API_KEY = "valid_key_1234567890";
-      service = new AIService();
     });
 
     it("AIServiceConfigSchema powinien zaakceptować prawidłowe config", () => {
@@ -171,8 +167,8 @@ describe("AIService", () => {
       service = new AIService();
     });
 
-    it("isHealthy powinien zwrócić false dla błędnej konfiguracji", async () => {
-      service.setTimeout(100); // Bardzo krótki timeout - symulacja fail
+    it("isHealthy powinien zwrócić boolean", async () => {
+      service.setTimeout(5000); // Prawidłowy timeout
       const health = await service.isHealthy();
       expect(typeof health).toBe("boolean");
     });
@@ -225,8 +221,8 @@ describe("AIService", () => {
       process.env.OPENROUTER_API_KEY = "valid_key_1234567890";
       const service = new AIService().setRetryPolicy({
         maxRetries: 1,
-        baseDelayMs: 10,
-        maxDelayMs: 20,
+        baseDelayMs: 100,
+        maxDelayMs: 500,
         jitter: false,
       });
 
@@ -251,4 +247,3 @@ describe("AIService", () => {
     });
   });
 });
-

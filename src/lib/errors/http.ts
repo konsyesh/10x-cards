@@ -12,20 +12,15 @@ import { defineDomain } from "./registry";
 
 // Lazy-load Sentry tylko jeśli jest dostępny i włączony na PROD
 let sentry: any = null;
-const SENTRY_ENABLED =
-  typeof import.meta !== "undefined" &&
-  (import.meta as any).env?.SENTRY_ENABLED === "true";
+const SENTRY_ENABLED = typeof import.meta !== "undefined" && (import.meta as any).env?.SENTRY_ENABLED === "true";
 
 // Inicjalizacja Sentry (opóźniona, tylko w runtime)
 if (SENTRY_ENABLED) {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, global-require
     sentry = require("@sentry/node");
     sentry.init({
-      dsn:
-        typeof import.meta !== "undefined" ? (import.meta as any).env?.SENTRY_DSN : undefined,
-      environment:
-        typeof import.meta !== "undefined" ? (import.meta as any).env?.SENTRY_ENV : "production",
+      dsn: typeof import.meta !== "undefined" ? (import.meta as any).env?.SENTRY_DSN : undefined,
+      environment: typeof import.meta !== "undefined" ? (import.meta as any).env?.SENTRY_ENV : "production",
     });
   } catch {
     // Brak @sentry/node - kontynuuj bez Sentry
@@ -125,5 +120,3 @@ export function withProblemHandling(handler: APIRoute): APIRoute {
     }
   };
 }
-
-

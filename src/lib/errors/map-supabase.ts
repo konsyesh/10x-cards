@@ -7,11 +7,11 @@
 
 import { flashcardErrors } from "@/services/flashcard/flashcard.errors";
 
-type SupabaseError = {
+interface SupabaseError {
   code?: string;
   message: string;
   status?: number;
-};
+}
 
 /**
  * Mapuj Supabase error na odpowiedni DomainError
@@ -47,5 +47,3 @@ export function fromSupabase(err: SupabaseError) {
     cause: err,
   });
 }
-
-

@@ -43,7 +43,7 @@ describe("AIService - Integration Tests", () => {
           "Stwórz 3 fiszki o mitochondriach. Format JSON ze schematem: { flashcards: [{front, back}, ...] }"
         )
         .setSchema(schema)
-        .generateObject<{ flashcards: Array<{ front: string; back: string }> }>();
+        .generateObject<{ flashcards: { front: string; back: string }[] }>();
 
       expect(result).toHaveProperty("flashcards");
       expect(Array.isArray(result.flashcards)).toBe(true);
@@ -82,10 +82,7 @@ describe("AIService - Integration Tests", () => {
 
       // Może się nie hit'ować rate limit w dev
       try {
-        await aiService
-          .setUserPrompt("test")
-          .setSchema(schema)
-          .generateObject();
+        await aiService.setUserPrompt("test").setSchema(schema).generateObject();
       } catch (err) {
         if (isDomainError(err)) {
           // Rate limited lub inne błędy
@@ -150,9 +147,7 @@ describe("AIService - Integration Tests", () => {
 
     it("powinien obsługiwać brak promptu", async () => {
       try {
-        await aiService
-          .setSchema(z.object({ test: z.string() }))
-          .generateObject();
+        await aiService.setSchema(z.object({ test: z.string() })).generateObject();
         expect.fail("Powinien wyrzucić błąd");
       } catch (err) {
         if (isDomainError(err)) {
@@ -186,10 +181,18 @@ describe("AIService - Integration Tests", () => {
   describe("Logger integration", () => {
     it("powinien zaakceptować logger", () => {
       const logger = {
-        debug: (msg: string) => {},
-        info: (msg: string) => {},
-        warn: (msg: string) => {},
-        error: (msg: string) => {},
+        debug: (_msg: string) => {
+          // no-op
+        },
+        info: (_msg: string) => {
+          // no-op
+        },
+        warn: (_msg: string) => {
+          // no-op
+        },
+        error: (_msg: string) => {
+          // no-op
+        },
       };
 
       const service = new AIService({ logger });
@@ -224,4 +227,3 @@ describe("AIService - Integration Tests", () => {
     });
   });
 });
-

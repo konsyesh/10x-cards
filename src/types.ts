@@ -31,6 +31,29 @@ export type FlashcardUpdateRow = TablesUpdate<"flashcards">;
  */
 
 /**
+ * Parametry konfiguracji modelu AI dla sesji generowania
+ */
+export interface AIParameters {
+  /** Temperatura randomowości (0-2) */
+  temperature?: number;
+  /** Maksymalna liczba tokenów w odpowiedzi (1-4000) */
+  maxTokens?: number;
+  /** Top-p sampling (0-1) */
+  topP?: number;
+  /** Polityka powtórzeń */
+  retryPolicy?: {
+    /** Maksymalna liczba powtórzeń (0-5) */
+    maxRetries?: number;
+    /** Bazowa opóźnienie w ms (10-10000) */
+    baseDelayMs?: number;
+    /** Maksymalne opóźnienie w ms (50-60000) */
+    maxDelayMs?: number;
+    /** Czy dodawać jitter do backoff'u */
+    jitter?: boolean;
+  };
+}
+
+/**
  * Komenda do utworzenia sesji generowania flashcards przez AI
  */
 export interface CreateGenerationCommand {
@@ -38,6 +61,8 @@ export interface CreateGenerationCommand {
   source_text: string;
   /** Model LLM do użycia */
   model: string;
+  /** Opcjonalne parametry konfiguracji AI */
+  aiParameters?: AIParameters;
 }
 
 /**

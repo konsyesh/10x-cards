@@ -1,8 +1,36 @@
 import { createHash } from "crypto";
-import type { CreateGenerationCommand, GenerationResponseDTO, GeneratedFlashcardCandidateDTO } from "../../types";
+import type {
+  CreateGenerationCommand,
+  GenerationResponseDTO,
+  GeneratedFlashcardCandidateDTO,
+  AIParameters,
+} from "../../types";
 import type { SupabaseClient } from "../../db/supabase.client";
 import { generationErrors } from "./generation.errors";
 import { fromSupabase } from "@/lib/errors/map-supabase";
+import { AIService } from "../ai/ai.service";
+import { z } from "zod";
+
+/**
+ * Schemat Zod dla struktury odpowiedzi z AIService
+ * Definiuje, jak powinny wyglądać fiszki zwracane przez model LLM
+ *
+ * @example
+ * { flashcards: [{ front: "...", back: "..." }] }
+ */
+const AIGeneratedFlashcardsSchema = z.object({
+  flashcards: z
+    .array(
+      z.object({
+        front: z.string().min(1).max(200),
+        back: z.string().min(1).max(500),
+      })
+    )
+    .min(1)
+    .max(50),
+});
+
+type AIGeneratedFlashcards = z.infer<typeof AIGeneratedFlashcardsSchema>;
 
 /**
  * Serwis do zarządzania sesją generowania flashcard'ów
@@ -26,6 +54,128 @@ export class GenerationService {
    */
   private calculateSourceTextHash(sourceText: string): string {
     return createHash("md5").update(sourceText).digest("hex");
+  }
+
+  /**
+   * FACTORY METHOD: Tworzy i konfiguruje AIService
+   *
+   * Odpowiedzialność: Instancjacja i inicjalizacja serwisu AI
+   * - Tworzenie nowej instancji AIService
+   * - Konfiguracja na bazie aiParameters (jeśli dostępne)
+   *
+   * Pattern: Factory Pattern
+   * Korzyści:
+   * - Centralne miejsce do tworzenia AIService
+   * - Łatwe testowanie (mockowanie)
+   * - Przyszłość-proof dla nowych parametrów
+   *
+   * @param aiParameters - Opcjonalne parametry z request'a (temperature, maxTokens, topP, retryPolicy)
+   * @returns Skonfigurowany AIService gotowy do użycia
+   *
+   * @throws AIServiceError - Jeśli konfiguracja jest nieprawidłowa
+   *
+   * @example
+   * // Bez custom parametrów
+   * const service = this.createAIService();
+   *
+   * @example
+   * // Z custom parametrami
+   * const service = this.createAIService({
+   *   temperature: 0.7,
+   *   maxTokens: 2000,
+   *   retryPolicy: { maxRetries: 3 }
+   * });
+   */
+  private createAIService(aiParameters?: AIParameters): AIService {
+    const aiService = new AIService();
+
+    // Jeśli frontend przesłał custom parametry, aplikujemy je
+    if (aiParameters) {
+      // Aplikuj parametry modelu (temperature, maxTokens, topP)
+      // Warunki sprawdzają czy któryś z parametrów został ustawiony
+      if (
+        aiParameters.temperature !== undefined ||
+        aiParameters.maxTokens !== undefined ||
+        aiParameters.topP !== undefined
+      ) {
+        aiService.setParameters({
+          temperature: aiParameters.temperature,
+          maxTokens: aiParameters.maxTokens,
+          topP: aiParameters.topP,
+        });
+      }
+
+      // Aplikuj retry policy (jeśli dostępny)
+      if (aiParameters.retryPolicy) {
+        aiService.setRetryPolicy(aiParameters.retryPolicy);
+      }
+    }
+
+    return aiService;
+  }
+
+  /**
+   * PRIVATE METHOD: Generowanie flashcards z AIService
+   *
+   * Odpowiedzialność:
+   * - Przygotowanie system/user prompt
+   * - Konfiguracja AIService z schematem
+   * - Wywołanie generateObject
+   * - Mapowanie wyniku do DTO
+   *
+   * @param sourceText - Tekst źródłowy do analizy
+   * @param model - Nazwa modelu LLM
+   * @param aiService - Skonfigurowany AIService
+   * @returns Tablica wygenerowanych kandydatów flashcards
+   *
+   * @throws AIServiceError - Jeśli generowanie się nie powiedzie
+   *
+   * @example
+   * const result = await this.generateFlashcardsWithAI(
+   *   "Source text...",
+   *   "gpt-4o-mini",
+   *   aiService
+   * );
+   */
+  private async generateFlashcardsWithAI(
+    sourceText: string,
+    model: string,
+    aiService: AIService
+  ): Promise<GeneratedFlashcardCandidateDTO[]> {
+    // System prompt - instrukcje dla modelu
+    const systemPrompt = `Jesteś ekspertem do tworzenia fiszek edukacyjnych o najwyższej jakości.
+
+Twoje zadanie to wygenerowanie fiszek na podstawie podanego tekstu źródłowego, które są:
+- Jasne i zwięzłe
+- Skupione na kluczowych koncepcjach i celach nauczania
+- Dobrze ustrukturyzowane dla efektywnego uczenia się
+- Wolne od dwuznaczności i redundancji
+
+Reguły:
+- Front (pytanie): 1-200 znaków, jasne pytanie lub sformułowanie
+- Back (odpowiedź): 1-500 znaków, kompleksowa ale zwięzła odpowiedź
+- Wyjście MUSI być poprawnym JSON zgodnym ze schematem
+- Nigdy nie dołączaj metadanych, komentarzy ani wyjaśnień
+- Wygeneruj między 3-15 fiszkach w zależności od długości i złożoności tekstu
+- Skupiaj się na wiedzy praktycznej, nie na trywialnych szczegółach`;
+
+    // User prompt - tekst do analizy
+    const userPrompt = `Wygeneruj wysokiej jakości fiszki z następującego tekstu:\n\n${sourceText}`;
+
+    // Konfiguracja AIService i wygenerowanie wyniku
+    const result = await aiService
+      .setModel(model)
+      .setSystemPrompt(systemPrompt)
+      .setUserPrompt(userPrompt)
+      .setSchema(AIGeneratedFlashcardsSchema)
+      .generateObject<AIGeneratedFlashcards>();
+
+    // Mapuj wynik na GeneratedFlashcardCandidateDTO z domyślnym source: "ai-full"
+    return result.flashcards.map((card) => ({
+      front: card.front,
+      back: card.back,
+      source: "ai-full" as const,
+    }));
   }
 
   /**
@@ -64,20 +214,28 @@ export class GenerationService {
    * Tworzy nową sesję generowania flashcard'ów
    * Przeprowadza pełny cykl: walidacja → tworzenie rekordu → generowanie → aktualizacja
    *
-   * @param command - CreateGenerationCommand zawierająca source_text i model
-   * @returns Promise<GenerationResponseDTO> - Odpowiedź z wygenerowanymi kartami
+   * Architektura:
+   * - Krok 1: Tworzenie rekordu w DB z statusem "pending"
+   * - Krok 2: Konfiguracja AIService za pomocą factory method (z custom parametrami jeśli dostępne)
+   * - Krok 3: Generowanie flashcards (AI lub mock jako fallback)
+   * - Krok 4: Walidacja wygenerowanych kart
+   * - Krok 5: Zapis rezultatów do DB
+   * - Krok 6: Zwrócenie response DTO
    *
-   * @throws Error jeśli operacje bazodanowe się nie powodzą
+   * @param command - CreateGenerationCommand zawierająca source_text, model i opcjonalne aiParameters
+   * @returns Promise<GenerationResponseDTO> - Odpowiedź z wygenerowanymi kartami
+   * @throws Błędy z ERROR_REGISTRY - Jeśli operacje się nie powodzą
    *
    * @example
    * const service = new GenerationService(supabase, userId);
    * const response = await service.createGeneration({
    *   source_text: "...",
-   *   model: "gpt-4o-mini"
+   *   model: "gpt-4o-mini",
+   *   aiParameters: { temperature: 0.7 }
    * });
    */
   async createGeneration(command: CreateGenerationCommand): Promise<GenerationResponseDTO> {
-    const { source_text, model } = command;
+    const { source_text, model, aiParameters } = command;
 
     // Obliczenie hash i długości tekstu
     const sourceTextHash = this.calculateSourceTextHash(source_text);
@@ -113,10 +271,24 @@ export class GenerationService {
     const generationId = generationRecord.id;
 
     try {
-      // Krok 2: Wywołanie serwisu LLM (mock na tym etapie)
-      const flashcardsGenerated = await this.generateFlashcardsWithMock(source_text, model);
+      // Krok 2: Konfiguracja AIService za pomocą factory method
+      // Factory zajmuje się konfiguracją na bazie aiParameters
+      const aiService = this.createAIService(aiParameters);
 
-      // Krok 3: Walidacja każdego wygenerowanego flashcard'a
+      // Krok 3: Generowanie flashcards (AI lub mock jako fallback)
+      let flashcardsGenerated: GeneratedFlashcardCandidateDTO[];
+
+      try {
+        // Próba użycia AIService do generowania
+        flashcardsGenerated = await this.generateFlashcardsWithAI(source_text, model, aiService);
+      } catch (aiError) {
+        // Fallback na mock jeśli AIService się nie powiedzie
+        // eslint-disable-next-line no-console
+        console.warn("[Generation Service] AI generation failed, falling back to mock:", aiError);
+        flashcardsGenerated = await this.generateFlashcardsWithMock(source_text, model);
+      }
+
+      // Krok 4: Walidacja każdego wygenerowanego flashcard'a
       const validatedFlashcards: GeneratedFlashcardCandidateDTO[] = flashcardsGenerated.filter((card) => {
         const frontValid = card.front.length >= 1 && card.front.length <= 200;
         const backValid = card.back.length >= 1 && card.back.length <= 500;
@@ -132,7 +304,7 @@ export class GenerationService {
       // Obliczenie czasu przetwarzania
       const generationDurationMs = Date.now() - startTime;
 
-      // Krok 4: Aktualizacja rekordu z wynikami
+      // Krok 5: Aktualizacja rekordu z wynikami
       const { error: updateError } = await this.supabase
         .from("generations")
         .update({
@@ -152,7 +324,7 @@ export class GenerationService {
         });
       }
 
-      // Krok 5: Zwrócenie Response DTO
+      // Krok 6: Zwrócenie Response DTO
       const response: GenerationResponseDTO = {
         generation_id: generationId,
         status: "completed",

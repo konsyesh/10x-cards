@@ -95,7 +95,7 @@ export class AIService {
     const cfg = parseResult.data;
 
     // Uzupełnienie apiKey z env
-    const apiKey = cfg.apiKey ?? process.env.OPENROUTER_API_KEY;
+    const apiKey = cfg.apiKey ?? import.meta.env.OPENROUTER_API_KEY;
     if (!apiKey || apiKey.length < 10) {
       throw aiErrors.creators.Unauthorized({
         detail: "Brak lub nieprawidłowy OPENROUTER_API_KEY w konfiguracji lub zmiennych środowiskowych",

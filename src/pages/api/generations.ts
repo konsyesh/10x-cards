@@ -43,6 +43,24 @@ const createGenerationCommandSchema = z.object({
     .optional()
     .transform((m) => m ?? ("gpt-4o-mini" as const))
     .describe("Model LLM do użycia w generowaniu"),
+
+  // Opcjonalne: Parametry konfiguracji AI (na przyszłość)
+  aiParameters: z
+    .object({
+      temperature: z.number().min(0).max(2).optional(),
+      maxTokens: z.number().int().positive().max(4000).optional(),
+      topP: z.number().min(0).max(1).optional(),
+      retryPolicy: z
+        .object({
+          maxRetries: z.number().int().min(0).max(5).optional(),
+          baseDelayMs: z.number().int().min(10).max(10000).optional(),
+          maxDelayMs: z.number().int().min(50).max(60000).optional(),
+          jitter: z.boolean().optional(),
+        })
+        .optional(),
+    })
+    .optional()
+    .describe("Opcjonalne parametry konfiguracji AI"),
 });
 
 /**
@@ -101,6 +119,7 @@ export const POST: APIRoute = withProblemHandling(async ({ request, locals }) =>
     const generationResponse = await generationService.createGeneration({
       source_text: commandData.source_text,
       model: commandData.model ?? "gpt-4o-mini",
+      aiParameters: commandData.aiParameters, // Opcjonalne, może być undefined
     });
 
     return successResponse(generationResponse);

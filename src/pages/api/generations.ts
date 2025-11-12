@@ -21,6 +21,9 @@ import { successResponse } from "@/lib/http/http.responses";
 import { withProblemHandling } from "@/lib/errors/http";
 import { generationErrors } from "@/services/generation/generation.errors";
 
+import { createLogger } from "@/lib/logger";
+import { requestId as ensureRequestId } from "@/lib/errors/http";
+
 export const prerender = false;
 
 /**
@@ -101,6 +104,8 @@ function checkRateLimit(userId: string): boolean {
 
 export const POST: APIRoute = withProblemHandling(async ({ request, locals }) => {
   const userId = DEFAULT_USER_ID;
+  const reqId = ensureRequestId(request.headers);
+  const logger = createLogger({ context: "POST /api/generations", requestId: reqId });
 
   // Rate limiting check - rzuć DomainError jeśli limit przekroczony
   if (!checkRateLimit(userId)) {
@@ -114,16 +119,21 @@ export const POST: APIRoute = withProblemHandling(async ({ request, locals }) =>
   // Walidacja body (rzuca DomainError jeśli fail)
   const commandData = await validateBody(request, createGenerationCommandSchema);
 
+  logger.info("Generation request received", { userId: DEFAULT_USER_ID });
+
   try {
-    const generationService = new GenerationService(locals.supabase, userId);
+    const generationService = new GenerationService(locals.supabase, userId, logger);
     const generationResponse = await generationService.createGeneration({
       source_text: commandData.source_text,
       model: commandData.model ?? "gpt-4o-mini",
       aiParameters: commandData.aiParameters, // Opcjonalne, może być undefined
     });
 
+    logger.info("Generation request completed", { generationId: generationResponse.generation_id });
+
     return successResponse(generationResponse);
   } catch (err) {
+    logger.error("Generation request failed", { error: err });
     // Jeśli już to DomainError - propaguj
     if (err instanceof Error && "code" in err) {
       throw err;

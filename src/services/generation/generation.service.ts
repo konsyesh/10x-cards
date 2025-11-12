@@ -11,6 +11,8 @@ import { fromSupabase } from "@/lib/errors/map-supabase";
 import { AIService } from "../ai/ai.service";
 import { z } from "zod";
 
+import type { Logger as AIServiceLogger } from "@/services/ai/ai.service";
+
 /**
  * Schemat Zod dla struktury odpowiedzi z AIService
  * Definiuje, jak powinny wyglądać fiszki zwracane przez model LLM
@@ -38,13 +40,11 @@ type AIGeneratedFlashcards = z.infer<typeof AIGeneratedFlashcardsSchema>;
  * wyników generowania oraz obsługę błędów
  */
 export class GenerationService {
-  private supabase: SupabaseClient;
-  private userId: string;
-
-  constructor(supabase: SupabaseClient, userId: string) {
-    this.supabase = supabase;
-    this.userId = userId;
-  }
+  constructor(
+    private readonly supabase: SupabaseClient,
+    private readonly userId: string,
+    private readonly logger?: AIServiceLogger
+  ) {}
 
   /**
    * Oblicza MD5 hash tekstu źródłowego
@@ -87,7 +87,7 @@ export class GenerationService {
    * });
    */
   private createAIService(aiParameters?: AIParameters): AIService {
-    const aiService = new AIService();
+    const aiService = new AIService({ logger: this.logger });
 
     // Jeśli frontend przesłał custom parametry, aplikujemy je
     if (aiParameters) {
@@ -244,6 +244,12 @@ Reguły:
     // Krok 1: Utworzenie rekordu w tabeli `generations` z statusem "pending"
     const startTime = Date.now();
 
+    this.logger?.info("Generation record insert start", {
+      userId: this.userId,
+      model,
+      sourceTextLength,
+    });
+
     const { data: generationRecord, error: createError } = await this.supabase
       .from("generations")
       .insert({
@@ -259,8 +265,7 @@ Reguły:
       .single();
 
     if (createError || !generationRecord) {
-      // eslint-disable-next-line no-console
-      console.error("[Generation Service] Database error on create:", createError);
+      this.logger?.error("Generation record insert failed", { error: createError });
       throw generationErrors.creators.ProviderError({
         detail: "Failed to create generation record",
         meta: { error: createError?.message },
@@ -280,11 +285,11 @@ Reguły:
 
       try {
         // Próba użycia AIService do generowania
+        this.logger?.info("AI generation attempt", { generationId, model });
         flashcardsGenerated = await this.generateFlashcardsWithAI(source_text, model, aiService);
       } catch (aiError) {
         // Fallback na mock jeśli AIService się nie powiedzie
-        // eslint-disable-next-line no-console
-        console.warn("[Generation Service] AI generation failed, falling back to mock:", aiError);
+        this.logger?.warn("AI generation failed, falling back to mock", { error: aiError });
         flashcardsGenerated = await this.generateFlashcardsWithMock(source_text, model);
       }
 
@@ -294,8 +299,11 @@ Reguły:
         const backValid = card.back.length >= 1 && card.back.length <= 500;
 
         if (!frontValid || !backValid) {
-          // eslint-disable-next-line no-console
-          console.warn("[Generation Service] Invalid flashcard filtered out:", card);
+          this.logger?.warn("Invalid flashcard filtered out", {
+            generationId,
+            frontLength: card.front.length,
+            backLength: card.back.length,
+          });
         }
 
         return frontValid && backValid;
@@ -315,8 +323,7 @@ Reguły:
         .eq("id", generationId);
 
       if (updateError) {
-        // eslint-disable-next-line no-console
-        console.error("[Generation Service] Database error on update:", updateError);
+        this.logger?.error("Generation record update failed", { generationId, error: updateError });
         throw generationErrors.creators.ProviderError({
           detail: "Failed to update generation record",
           meta: { error: updateError?.message },
@@ -334,6 +341,12 @@ Reguły:
         flashcards_candidates: validatedFlashcards,
         message: `Wygenerowano ${validatedFlashcards.length} flashcard'ów.`,
       };
+
+      this.logger?.info("Generation completed", {
+        generationId,
+        cardCount: validatedFlashcards.length,
+        durationMs: generationDurationMs,
+      });
 
       return response;
     } catch (error) {
@@ -363,6 +376,12 @@ Reguły:
           generation_duration_ms: generationDurationMs,
         })
         .eq("id", generationId);
+
+      this.logger?.error("Generation failed", {
+        generationId,
+        durationMs: generationDurationMs,
+        error,
+      });
 
       throw error;
     }

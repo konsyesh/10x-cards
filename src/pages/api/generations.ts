@@ -103,7 +103,7 @@ function checkRateLimit(userId: string): boolean {
 }
 
 export const POST: APIRoute = withProblemHandling(async ({ request, locals }) => {
-  const userId = DEFAULT_USER_ID;
+  const userId = locals.user?.id ?? DEFAULT_USER_ID;
   const reqId = ensureRequestId(request.headers);
   const logger = createLogger({ context: "POST /api/generations", requestId: reqId });
 

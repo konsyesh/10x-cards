@@ -53,7 +53,7 @@ const createFlashcardsCommandSchema = z.object({
 
 export const POST: APIRoute = withProblemHandling(async ({ request, locals }) => {
   // TODO: JWT verification w middleware
-  const userId = DEFAULT_USER_ID;
+  const userId = locals.user?.id ?? DEFAULT_USER_ID;
 
   // Walidacja body (rzuca DomainError jeśli fail)
   const commandData: CreateFlashcardsCommand = await validateBody(request, createFlashcardsCommandSchema);

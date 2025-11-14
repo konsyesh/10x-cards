@@ -21,12 +21,22 @@ import { authErrors } from "@/services/auth/auth.errors";
 import { validateAuthBody } from "@/lib/http/http.validate-body";
 import { RegisterCredentialsSchema } from "@/services/auth/auth.schema";
 import { getBaseUrl } from "@/lib/http/http.base-url";
+import { createInMemoryRateLimiter, makeKeyIpEmail } from "@/lib/http/http.rate-limit";
 
 export const prerender = false;
+
+// 5 prób/min per IP+email
+const registerLimiter = createInMemoryRateLimiter({ windowMs: 60_000, max: 5 });
 
 export const POST: APIRoute = withProblemHandling(async ({ request, locals }) => {
   // Walidacja body
   const { email, password } = await validateAuthBody(request, RegisterCredentialsSchema);
+
+  // Rate limit
+  const key = makeKeyIpEmail(request.headers, email);
+  if (!registerLimiter.check(key)) {
+    throw authErrors.creators.RateLimited({ detail: "Zbyt wiele prób. Spróbuj za chwilę." });
+  }
 
   // Supabase SSR instance (już utworzona przez middleware)
   const supabase = locals.supabase;

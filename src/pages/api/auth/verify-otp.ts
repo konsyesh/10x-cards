@@ -18,8 +18,12 @@ import { fromSupabaseAuth } from "@/lib/errors/map-supabase-auth";
 import { successResponse } from "@/lib/http/http.responses";
 import { authErrors } from "@/services/auth/auth.errors";
 import { validateAuthBody } from "@/lib/http/http.validate-body";
+import { createInMemoryRateLimiter, makeKeyIpEmail } from "@/lib/http/http.rate-limit";
 
 export const prerender = false;
+
+// 5 prób/min per IP+email
+const verifyOtpLimiter = createInMemoryRateLimiter({ windowMs: 60_000, max: 5 });
 
 /**
  * Schema walidacji dla weryfikacji OTP
@@ -39,6 +43,12 @@ const verifyOtpSchema = z.object({
 export const POST: APIRoute = withProblemHandling(async ({ request, locals }) => {
   // Walidacja body
   const { email, token, type } = await validateAuthBody(request, verifyOtpSchema);
+
+  // Rate limit
+  const key = makeKeyIpEmail(request.headers, email);
+  if (!verifyOtpLimiter.check(key)) {
+    throw authErrors.creators.RateLimited({ detail: "Zbyt wiele prób. Spróbuj ponownie za chwilę." });
+  }
 
   // Supabase SSR instance (już utworzona przez middleware)
   const supabase = locals.supabase;

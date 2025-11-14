@@ -1,8 +1,6 @@
 export function getBaseUrl(request: Request): string {
   const envFromNode = typeof process !== "undefined" ? process.env.PUBLIC_SITE_URL : undefined;
-  const envFromVite =
-    (typeof import.meta !== "undefined" ? (import.meta as unknown as ImportMetaEnv).env?.PUBLIC_SITE_URL : undefined) ||
-    "";
+  const envFromVite = import.meta.env.PUBLIC_SITE_URL ?? "";
 
   const raw =
     (envFromNode && envFromNode.length > 0 && envFromNode) ||

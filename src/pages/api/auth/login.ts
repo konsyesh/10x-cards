@@ -17,6 +17,8 @@ import { withProblemHandling } from "@/lib/errors/http";
 import { fromSupabaseAuth } from "@/lib/errors/map-supabase-auth";
 import { successResponse } from "@/lib/http/http.responses";
 import { validateAuthBody } from "@/lib/http/http.validate-body";
+import { createInMemoryRateLimiter, makeKeyIpEmail } from "@/lib/http/http.rate-limit";
+import { authErrors } from "@/services/auth/auth.errors";
 
 export const prerender = false;
 
@@ -28,9 +30,23 @@ const loginSchema = z.object({
   password: z.string().min(1, "Hasło jest wymagane"),
 });
 
+// 5 prób na minutę per IP+email
+const loginLimiter = createInMemoryRateLimiter({ windowMs: 60_000, max: 5 });
+
+
 export const POST: APIRoute = withProblemHandling(async ({ request, locals }) => {
   // Walidacja body
   const { email, password } = await validateAuthBody(request, loginSchema);
+
+  // Rate limit
+  const key = makeKeyIpEmail(request.headers, email);
+  if (!loginLimiter.check(key)) {
+    throw authErrors.creators.RateLimited({
+      detail: "Zbyt wiele prób logowania. Spróbuj ponownie za chwilę.",
+    });
+  }
+
+  // (shared limiter replaces old inline limiter)
 
   // Supabase SSR instance (już utworzona przez middleware)
   const supabase = locals.supabase;

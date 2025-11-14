@@ -2,7 +2,7 @@
  * src/middleware/index.ts
  *
  * Middleware Astro dla autentykacji i korelacji X-Request-ID w SSR
- * 
+ *
  * Funkcjonalności:
  * - Tworzy SSR instance Supabase z cookies
  * - Pobiera sesję/użytkownika i zapisuje do locals
@@ -25,11 +25,14 @@ const PUBLIC_PATHS = [
   "/auth/reset-password",
   "/auth/new-password",
   "/auth/callback",
+  "/auth/verify-email",
   // Endpointy auth API
   "/api/auth/login",
   "/api/auth/register",
   "/api/auth/reset-password",
   "/api/auth/update-password",
+  "/api/auth/verify-otp",
+  "/api/auth/resend-verification",
 ];
 
 // Statyczne zasoby (favicon, assets)

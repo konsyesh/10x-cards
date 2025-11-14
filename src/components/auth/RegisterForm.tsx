@@ -8,59 +8,23 @@ import { fetchJson, ApiError } from "@/lib/http/http.fetcher";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Field,
-  FieldContent,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { VerifyEmailForm } from "./VerifyEmailForm";
+import { RegisterFormSchema, type RegisterFormData } from "@/services/auth/auth.schema";
 
-const registerSchema = z
-  .object({
-    email: z.string().email("Podaj poprawny e-mail").min(1, "E-mail jest wymagany"),
-    password: z
-      .string()
-      .min(8, "Hasło musi mieć co najmniej 8 znaków")
-      .max(72, "Hasło nie może przekraczać 72 znaków")
-      .regex(/[A-Za-z]/, "Hasło musi zawierać co najmniej jedną literę")
-      .regex(/[0-9]/, "Hasło musi zawierać co najmniej jedną cyfrę"),
-    confirmPassword: z.string().min(1, "Potwierdzenie hasła jest wymagane"),
-    acceptTerms: z.boolean().refine((val) => val === true, {
-      message: "Musisz zaakceptować regulamin",
-    }),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Hasła nie są identyczne",
-    path: ["confirmPassword"],
-  });
-
-type RegisterFormData = z.infer<typeof registerSchema>;
-
-interface RegisterFormProps extends React.ComponentProps<"div"> {}
+type RegisterFormProps = React.ComponentProps<"div">;
 
 export function RegisterForm({ className, ...props }: RegisterFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [showVerification, setShowVerification] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState<string>("");
 
   const form = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
+    resolver: zodResolver(RegisterFormSchema),
     defaultValues: {
       email: "",
       password: "",
@@ -73,27 +37,28 @@ export function RegisterForm({ className, ...props }: RegisterFormProps) {
     setIsLoading(true);
 
     try {
-      const response = await fetchJson<{ user_id?: string; message: string }>(
-        "/api/auth/register",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            email: data.email,
-            password: data.password,
-          }),
-        }
-      );
+      const response = await fetchJson<{ user_id?: string; message: string }>("/api/auth/register", {
+        method: "POST",
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+        }),
+      });
 
       // Jeśli zwrócono user_id, oznacza to automatyczne zalogowanie
       if (response.user_id) {
+        setIsLoading(false);
         toast.success("Rejestracja udana", {
           description: "Przekierowywanie...",
         });
         window.location.href = "/generate";
       } else {
-        // Wymagane potwierdzenie e-mail
+        // Wymagane potwierdzenie e-mail - reset isLoading i pokaż formularz weryfikacji
+        setIsLoading(false);
+        setShowVerification(true);
+        setRegisteredEmail(data.email);
         toast.success("Sprawdź skrzynkę e-mail", {
-          description: response.message || "Wysłaliśmy link aktywacyjny na Twój adres e-mail",
+          description: response.message || "Wprowadź kod weryfikacyjny z e-maila lub kliknij w link",
         });
       }
     } catch (err) {
@@ -129,14 +94,26 @@ export function RegisterForm({ className, ...props }: RegisterFormProps) {
     }
   };
 
+  // Jeśli wymagana weryfikacja, pokaż formularz weryfikacji
+  if (showVerification && registeredEmail) {
+    return (
+      <div className={cn("flex flex-col gap-6", className)} {...props}>
+        <VerifyEmailForm
+          email={registeredEmail}
+          onVerified={() => {
+            window.location.href = "/generate";
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
           <CardTitle>Utwórz konto</CardTitle>
-          <CardDescription>
-            Wprowadź swoje dane, aby utworzyć nowe konto
-          </CardDescription>
+          <CardDescription>Wprowadź swoje dane, aby utworzyć nowe konto</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -173,17 +150,10 @@ export function RegisterForm({ className, ...props }: RegisterFormProps) {
                     <FormItem>
                       <Field>
                         <FieldLabel htmlFor={field.name}>Hasło</FieldLabel>
-                        <FieldDescription>
-                          Minimum 8 znaków, co najmniej jedna litera i jedna cyfra
-                        </FieldDescription>
+                        <FieldDescription>Minimum 8 znaków, co najmniej jedna litera i jedna cyfra</FieldDescription>
                         <FieldContent>
                           <FormControl>
-                            <Input
-                              id={field.name}
-                              type="password"
-                              disabled={isLoading}
-                              {...field}
-                            />
+                            <Input id={field.name} type="password" disabled={isLoading} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FieldContent>
@@ -201,12 +171,7 @@ export function RegisterForm({ className, ...props }: RegisterFormProps) {
                         <FieldLabel htmlFor={field.name}>Potwierdź hasło</FieldLabel>
                         <FieldContent>
                           <FormControl>
-                            <Input
-                              id={field.name}
-                              type="password"
-                              disabled={isLoading}
-                              {...field}
-                            />
+                            <Input id={field.name} type="password" disabled={isLoading} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FieldContent>
@@ -222,11 +187,7 @@ export function RegisterForm({ className, ...props }: RegisterFormProps) {
                     <FormItem>
                       <Field orientation="horizontal">
                         <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                            disabled={isLoading}
-                          />
+                          <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isLoading} />
                         </FormControl>
                         <FieldContent>
                           <FieldLabel htmlFor={field.name} className="cursor-pointer">
@@ -255,10 +216,7 @@ export function RegisterForm({ className, ...props }: RegisterFormProps) {
                   </Button>
                   <FieldDescription className="text-center">
                     Masz już konto?{" "}
-                    <a
-                      href="/auth/login"
-                      className="underline-offset-4 hover:underline text-primary"
-                    >
+                    <a href="/auth/login" className="underline-offset-4 hover:underline text-primary">
                       Zaloguj się
                     </a>
                   </FieldDescription>
@@ -271,4 +229,3 @@ export function RegisterForm({ className, ...props }: RegisterFormProps) {
     </div>
   );
 }
-

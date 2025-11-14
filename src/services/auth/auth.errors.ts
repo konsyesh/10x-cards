@@ -48,4 +48,9 @@ export const authErrors = defineDomain("auth", {
     status: 502,
     title: "errors.auth.provider_error",
   },
+  TokenExpired: {
+    code: "auth/token-expired",
+    status: 410,
+    title: "errors.auth.token_expired",
+  },
 });

@@ -14,30 +14,15 @@
  */
 
 import type { APIRoute } from "astro";
-import { z } from "zod";
 import { withProblemHandling } from "@/lib/errors/http";
-import { fromZodAuth } from "@/lib/errors/map-zod";
 import { fromSupabaseAuth } from "@/lib/errors/map-supabase-auth";
 import { successResponse, createdResponse } from "@/lib/http/http.responses";
 import { authErrors } from "@/services/auth/auth.errors";
 import { validateAuthBody } from "@/lib/http/http.validate-body";
 import { RegisterCredentialsSchema } from "@/services/auth/auth.schema";
+import { getBaseUrl } from "@/lib/http/http.base-url";
 
 export const prerender = false;
-
-/**
- * Pobiera PUBLIC_SITE_URL dla emailRedirectTo
- * Priorytet: zmienna środowiskowa PUBLIC_SITE_URL, fallback: origin z request URL
- */
-function getBaseUrl(request: Request): string {
-  const envUrl = process.env.PUBLIC_SITE_URL ?? import.meta.env.PUBLIC_SITE_URL ?? "";
-
-  if (typeof envUrl === "string" && envUrl.length > 0) {
-    // return envUrl.replace(/\/$/, "");
-    return envUrl;
-  }
-  return new URL(request.url).origin;
-}
 
 export const POST: APIRoute = withProblemHandling(async ({ request, locals }) => {
   // Walidacja body

@@ -14,10 +14,10 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
 import { withProblemHandling } from "@/lib/errors/http";
-import { fromZodAuth } from "@/lib/errors/map-zod";
 import { fromSupabaseAuth } from "@/lib/errors/map-supabase-auth";
 import { successResponse } from "@/lib/http/http.responses";
 import { authErrors } from "@/services/auth/auth.errors";
+import { validateAuthBody } from "@/lib/http/http.validate-body";
 
 export const prerender = false;
 
@@ -36,47 +36,9 @@ const verifyOtpSchema = z.object({
   }),
 });
 
-type VerifyOtpRequest = z.infer<typeof verifyOtpSchema>;
-
-/**
- * Waliduj JSON body względem Zod schema
- * Rzuca auth/validation-failed w przypadku błędu
- */
-async function validateVerifyOtpBody(request: Request): Promise<VerifyOtpRequest> {
-  let payload: unknown;
-
-  try {
-    payload = await request.json();
-  } catch {
-    // JSON parse error → rzuć jako validation error
-    throw fromZodAuth({
-      issues: [
-        {
-          code: "custom",
-          message: "Invalid JSON",
-          path: [],
-        },
-      ],
-      addIssue: () => {},
-      flatten: () => ({
-        formErrors: ["Invalid JSON"],
-        fieldErrors: {},
-      }),
-    } as any);
-  }
-
-  const result = verifyOtpSchema.safeParse(payload);
-
-  if (!result.success) {
-    throw fromZodAuth(result.error);
-  }
-
-  return result.data;
-}
-
 export const POST: APIRoute = withProblemHandling(async ({ request, locals }) => {
   // Walidacja body
-  const { email, token, type } = await validateVerifyOtpBody(request);
+  const { email, token, type } = await validateAuthBody(request, verifyOtpSchema);
 
   // Supabase SSR instance (już utworzona przez middleware)
   const supabase = locals.supabase;
@@ -120,7 +82,7 @@ export const POST: APIRoute = withProblemHandling(async ({ request, locals }) =>
   // Zwracamy dane użytkownika
   return successResponse(
     {
-      user_id: data.user.id,
+      user_id: data.user?.id ?? "",
       message:
         type === "signup"
           ? "E-mail został zweryfikowany. Zostałeś automatycznie zalogowany."

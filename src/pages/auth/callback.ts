@@ -21,6 +21,13 @@ export const GET: APIRoute = async ({ url, locals }) => {
   const code = url.searchParams.get("code");
   const type = url.searchParams.get("type") || "signup";
 
+  if (!code) {
+    // Brak code → traktuj jako link nieprawidłowy/wygasły. Nie korzystamy z hash tokenów.
+    return new Response(null, {
+      status: 302,
+      headers: { Location: "/auth/verify-email?reason=invalid_or_expired" },
+    });
+  }
   // TODO: Implementacja wymiany code na sesję przez Supabase SSR
   // const supabase = createSupabaseServerInstance({ headers: request.headers, cookies });
 
@@ -33,13 +40,6 @@ export const GET: APIRoute = async ({ url, locals }) => {
     });
   }
 
-  // if (!code) {
-  //   // Brak code → traktuj jako link nieprawidłowy/wygasły. Nie korzystamy z hash tokenów.
-  //   return new Response(null, {
-  //     status: 302,
-  //     headers: { Location: "/auth/verify-email?reason=invalid_or_expired" },
-  //   });
-  // }
   // Redirect w zależności od typu
   const redirectUrl = type === "recovery" ? "/auth/new-password" : "/generate";
 

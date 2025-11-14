@@ -2,10 +2,10 @@
  * src/pages/api/auth/login.ts
  *
  * Endpoint POST /api/auth/login
- * 
+ *
  * Logowanie użytkownika przez Supabase Auth
  * Zgodne z auth-spec-codex.md i US-002
- * 
+ *
  * Request: { email: string, password: string }
  * Response: 200 { user_id: string, email: string }
  * Errors: 401 auth/invalid-credentials, 403 auth/email-not-confirmed, 429 auth/rate-limited
@@ -14,9 +14,9 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
 import { withProblemHandling } from "@/lib/errors/http";
-import { fromZodAuth } from "@/lib/errors/map-zod";
 import { fromSupabaseAuth } from "@/lib/errors/map-supabase-auth";
 import { successResponse } from "@/lib/http/http.responses";
+import { validateAuthBody } from "@/lib/http/http.validate-body";
 
 export const prerender = false;
 
@@ -28,47 +28,9 @@ const loginSchema = z.object({
   password: z.string().min(1, "Hasło jest wymagane"),
 });
 
-type LoginRequest = z.infer<typeof loginSchema>;
-
-/**
- * Waliduj JSON body względem Zod schema
- * Rzuca auth/validation-failed w przypadku błędu
- */
-async function validateLoginBody(request: Request): Promise<LoginRequest> {
-  let payload: unknown;
-
-  try {
-    payload = await request.json();
-  } catch {
-    // JSON parse error → rzuć jako validation error
-    throw fromZodAuth({
-      issues: [
-        {
-          code: "custom",
-          message: "Invalid JSON",
-          path: [],
-        },
-      ],
-      addIssue: () => {},
-      flatten: () => ({
-        formErrors: ["Invalid JSON"],
-        fieldErrors: {},
-      }),
-    } as any);
-  }
-
-  const result = loginSchema.safeParse(payload);
-
-  if (!result.success) {
-    throw fromZodAuth(result.error);
-  }
-
-  return result.data;
-}
-
 export const POST: APIRoute = withProblemHandling(async ({ request, locals }) => {
   // Walidacja body
-  const { email, password } = await validateLoginBody(request);
+  const { email, password } = await validateAuthBody(request, loginSchema);
 
   // Supabase SSR instance (już utworzona przez middleware)
   const supabase = locals.supabase;
@@ -94,4 +56,3 @@ export const POST: APIRoute = withProblemHandling(async ({ request, locals }) =>
     { status: 200 }
   );
 });
-

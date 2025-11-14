@@ -6,6 +6,7 @@ import type { Database } from "./database.types";
 
 const supabaseUrl = import.meta.env.SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.SUPABASE_KEY;
+const isProd = import.meta.env.PROD;
 
 /**
  * Klient Supabase dla użycia po stronie klienta (browser)
@@ -23,7 +24,7 @@ export const DEFAULT_USER_ID = "80df6047-cf39-43ee-bfc6-115756744825";
  */
 export const cookieOptions: CookieOptionsWithName = {
   path: "/",
-  secure: true,
+  secure: isProd,
   httpOnly: true,
   sameSite: "lax",
 };

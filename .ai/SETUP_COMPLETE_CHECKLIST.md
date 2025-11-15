@@ -198,13 +198,14 @@ npm run test:e2e:debug
 
 ### Week 1 (Tests Prioritization)
 
-1. **Days 1-2:** Unit tests for errors & HTTP helpers
-2. **Days 3-4:** Service tests (Generation, Flashcards)
-3. **Day 5:** API endpoint tests
+- ✅ **Days 1-2:** Unit tests for errors & HTTP helpers
+- ✅ **Days 3-4:** Service tests (Generation, Flashcards)
+- ✅ **Day 5:** API endpoint tests
 
 ### Week 2
 
-1. **Days 1-2:** Auth API tests
+- ✅ **Days 1-2:** Auth API tests
+
 2. **Days 3-4:** React hooks & component tests
 3. **Day 5:** E2E smoke tests
 

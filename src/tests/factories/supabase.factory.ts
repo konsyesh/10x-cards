@@ -136,6 +136,7 @@ export const createMockSupabaseClient = (): {
       resetPasswordForEmail: vi.fn(),
       updateUser: vi.fn(),
       verifyOtp: vi.fn(),
+      resend: vi.fn(),
     },
   };
 

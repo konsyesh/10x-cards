@@ -1,20 +1,26 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import { ResendVerificationForm } from "@/components/auth/ResendVerificationForm";
+import { StatusAlert } from "@/components/StatusAlert";
 
 export const prerender = false;
 
 const reason = Astro.url.searchParams.get("reason");
-const reasonText = reason === "invalid_or_expired" ? "Link weryfikacyjny jest nieprawidłowy lub wygasł." : undefined;
+const showExpiredAlert = reason === "invalid_or_expired";
 ---
 
 <Layout title="Potwierdź e‑mail">
   <div class="container mx-auto px-4 py-16 max-w-md space-y-4">
-    {reasonText && <div class="text-sm text-red-600">{reasonText}</div>}
-    <div class="text-sm text-muted-foreground">
-      Jeśli wcześniej potwierdziłeś e‑mail, możesz teraz
-      <a href="/auth/login" class="underline underline-offset-4">zalogować się</a>.
-    </div>
+    {
+      showExpiredAlert && (
+        <StatusAlert
+          variant="destructive"
+          title="Link weryfikacyjny jest nieprawidłowy lub wygasł."
+          description="Poproś o nowy link weryfikujący e-mail."
+          client:only="react"
+        />
+      )
+    }
     <ResendVerificationForm client:only="react" />
   </div>
   <script>
@@ -37,7 +43,7 @@ const reasonText = reason === "invalid_or_expired" ? "Link weryfikacyjny jest ni
         } else if (hasError) {
           // Pozostajemy na stronie – użytkownik może wysłać link ponownie.
         }
-      } catch (e) {
+      } catch {
         // ignore
       }
     })();

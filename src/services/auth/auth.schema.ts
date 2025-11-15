@@ -25,3 +25,27 @@ export const RegisterFormSchema = RegisterCredentialsSchema.extend({
 });
 
 export type RegisterFormData = z.infer<typeof RegisterFormSchema>;
+
+/**
+ * Schema dla żądania resetu hasła (tylko email)
+ */
+export const ResetPasswordRequestSchema = z.object({
+  email: EmailSchema,
+});
+
+export type ResetPasswordRequestData = z.infer<typeof ResetPasswordRequestSchema>;
+
+/**
+ * Schema dla aktualizacji hasła (password + confirmPassword)
+ */
+export const UpdatePasswordSchema = z
+  .object({
+    password: PasswordSchema,
+    confirmPassword: z.string().min(1, "Potwierdzenie hasła jest wymagane"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Hasła nie są identyczne",
+    path: ["confirmPassword"],
+  });
+
+export type UpdatePasswordData = z.infer<typeof UpdatePasswordSchema>;

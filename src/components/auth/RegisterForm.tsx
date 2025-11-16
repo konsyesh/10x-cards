@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { VerifyEmailForm } from "./VerifyEmailForm";
@@ -190,7 +190,7 @@ export function RegisterForm({ className, ...props }: RegisterFormProps) {
                           <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isLoading} />
                         </FormControl>
                         <FieldContent>
-                          <FieldLabel htmlFor={field.name} className="cursor-pointer">
+                          <FormLabel className="cursor-pointer">
                             Akceptuję{" "}
                             <a
                               href="#"
@@ -202,7 +202,7 @@ export function RegisterForm({ className, ...props }: RegisterFormProps) {
                             >
                               regulamin i politykę prywatności
                             </a>
-                          </FieldLabel>
+                          </FormLabel>
                           <FormMessage />
                         </FieldContent>
                       </Field>

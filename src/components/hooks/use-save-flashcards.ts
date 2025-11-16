@@ -78,6 +78,8 @@ export const useSaveFlashcards = () => {
         status: "success",
         message: `Pomyślnie zapisano ${totalSaved} fiszek`,
         savedCount: totalSaved,
+        totalBatches: batches.length,
+        // currentBatch jest resetowane po zakończeniu
       });
       return true;
     } catch (err) {

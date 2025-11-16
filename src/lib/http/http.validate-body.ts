@@ -8,6 +8,7 @@
 
 import type { ZodSchema } from "zod";
 import { fromZod } from "@/lib/errors/map-zod";
+import { fromZodAuth } from "@/lib/errors/map-zod";
 
 /**
  * Waliduj JSON body żądania względem Zod schema
@@ -54,5 +55,24 @@ export async function validateBody<T>(request: Request, schema: ZodSchema<T>): P
     throw fromZod(result.error);
   }
 
+  return result.data;
+}
+
+export async function validateAuthBody<T>(request: Request, schema: ZodSchema<T>): Promise<T> {
+  let payload: unknown;
+  try {
+    payload = await request.json();
+  } catch {
+    throw fromZodAuth({
+      issues: [{ code: "custom", message: "Invalid JSON", path: [] }],
+      addIssue: () => {},
+      flatten: () => ({ formErrors: ["Invalid JSON"], fieldErrors: {} }),
+    } as any);
+  }
+
+  const result = schema.safeParse(payload);
+  if (!result.success) {
+    throw fromZodAuth(result.error);
+  }
   return result.data;
 }

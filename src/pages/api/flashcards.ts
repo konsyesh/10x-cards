@@ -15,7 +15,7 @@
 
 import type { APIRoute } from "astro";
 import { z } from "zod";
-import { DEFAULT_USER_ID } from "@/db/supabase.client";
+import { authErrors } from "@/services/auth/auth.errors";
 import { FlashcardService } from "@/services/flashcard/flashcard.service";
 import { validateBody } from "@/lib/http/http.validate-body";
 import { createdResponse, successResponse } from "@/lib/http/http.responses";
@@ -52,8 +52,10 @@ const createFlashcardsCommandSchema = z.object({
 });
 
 export const POST: APIRoute = withProblemHandling(async ({ request, locals }) => {
-  // TODO: JWT verification w middleware
-  const userId = DEFAULT_USER_ID;
+  if (!locals.user) {
+    throw authErrors.creators.Unauthorized({ detail: "Wymagana autoryzacja" });
+  }
+  const userId = locals.user.id;
 
   // Walidacja body (rzuca DomainError jeśli fail)
   const commandData: CreateFlashcardsCommand = await validateBody(request, createFlashcardsCommandSchema);

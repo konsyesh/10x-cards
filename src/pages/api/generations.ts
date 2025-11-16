@@ -14,7 +14,7 @@
 
 import type { APIRoute } from "astro";
 import { z } from "zod";
-import { DEFAULT_USER_ID } from "@/db/supabase.client";
+import { authErrors } from "@/services/auth/auth.errors";
 import { GenerationService } from "@/services/generation/generation.service";
 import { validateBody } from "@/lib/http/http.validate-body";
 import { successResponse } from "@/lib/http/http.responses";
@@ -103,7 +103,10 @@ function checkRateLimit(userId: string): boolean {
 }
 
 export const POST: APIRoute = withProblemHandling(async ({ request, locals }) => {
-  const userId = DEFAULT_USER_ID;
+  if (!locals.user) {
+    throw authErrors.creators.Unauthorized({ detail: "Wymagana autoryzacja" });
+  }
+  const userId = locals.user.id;
   const reqId = ensureRequestId(request.headers);
   const logger = createLogger({ context: "POST /api/generations", requestId: reqId });
 
@@ -119,7 +122,7 @@ export const POST: APIRoute = withProblemHandling(async ({ request, locals }) =>
   // Walidacja body (rzuca DomainError jeśli fail)
   const commandData = await validateBody(request, createGenerationCommandSchema);
 
-  logger.info("Generation request received", { userId: DEFAULT_USER_ID });
+  logger.info("Generation request received", { userId });
 
   try {
     const generationService = new GenerationService(locals.supabase, userId, logger);

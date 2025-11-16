@@ -118,12 +118,12 @@ Kryteria akceptacji:
 - Błąd przy istniejącym e-mailu wyświetla czytelny komunikat.
 
 US-002 Logowanie
-Opis: Jako użytkownik chcę się zalogować, aby uzyskać dostęp do moich fiszek i funkcji generowania.
+Opis: Jako użytkownik chcę się zalogować, aby uzyskać dostęp funkcji generowania.
 Kryteria akceptacji:
 
 - Logowanie wymaga e-maila i hasła.
 - Błędne dane pokazują komunikat bez ujawniania, które pole jest niepoprawne.
-- Po zalogowaniu następuje przekierowanie do pulpitu.
+- Po zalogowaniu następuje przekierowanie do pulpitu /generate
 
 US-003 Reset hasła
 Opis: Jako użytkownik, który zapomniał hasła, chcę je zresetować, aby odzyskać dostęp.

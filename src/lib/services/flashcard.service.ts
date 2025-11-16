@@ -147,38 +147,37 @@ export class FlashcardService {
 
     // Wykonaj updates dla każdej generation
     for (const [genId, counts] of Object.entries(updates)) {
-      if (counts.unedited > 0) {
-        const { error } = await this.supabase
-          .from("generations")
-          .update({
-            accepted_unedited_count: (this.supabase.rpc as unknown as CallableFunction)("increment", {
-              column: "accepted_unedited_count",
-              amount: counts.unedited,
-            }),
-          })
-          .eq("id", parseInt(genId, 10));
+      const generationIdNum = parseInt(genId, 10);
 
-        if (error) {
-          // eslint-disable-next-line no-console
-          console.error(`[FlashcardService] Error updating accepted_unedited_count for generation ${genId}:`, error);
-        }
+      // Odczytaj aktualną wartość obu liczników
+      const { data, error: selectError } = await this.supabase
+        .from("generations")
+        .select("accepted_unedited_count, accepted_edited_count")
+        .eq("id", generationIdNum)
+        .single();
+
+      if (selectError || !data) {
+        // eslint-disable-next-line no-console
+        console.error(`[FlashcardService] Error reading generation ${generationIdNum}:`, selectError);
+        continue;
       }
 
-      if (counts.edited > 0) {
-        const { error } = await this.supabase
-          .from("generations")
-          .update({
-            accepted_edited_count: (this.supabase.rpc as unknown as CallableFunction)("increment", {
-              column: "accepted_edited_count",
-              amount: counts.edited,
-            }),
-          })
-          .eq("id", parseInt(genId, 10));
+      // Oblicz nowe wartości: jeśli null to 0, inaczej aktualna + increment
+      const newUneditedCount = (data.accepted_unedited_count ?? 0) + counts.unedited;
+      const newEditedCount = (data.accepted_edited_count ?? 0) + counts.edited;
 
-        if (error) {
-          // eslint-disable-next-line no-console
-          console.error(`[FlashcardService] Error updating accepted_edited_count for generation ${genId}:`, error);
-        }
+      // Zaktualizuj obie kolumny naraz
+      const { error: updateError } = await this.supabase
+        .from("generations")
+        .update({
+          accepted_unedited_count: newUneditedCount,
+          accepted_edited_count: newEditedCount,
+        })
+        .eq("id", generationIdNum);
+
+      if (updateError) {
+        // eslint-disable-next-line no-console
+        console.error(`[FlashcardService] Error updating generation ${generationIdNum}:`, updateError);
       }
     }
   }

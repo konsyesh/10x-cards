@@ -1,0 +1,10 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import GenerateView from "@/components/generate/GenerateView";
+---
+
+<Layout title="Generuj Karty">
+  <div class="min-h-screen bg-background">
+    <GenerateView client:only="react" />
+  </div>
+</Layout>

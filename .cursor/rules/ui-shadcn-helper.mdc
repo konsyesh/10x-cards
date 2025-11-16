@@ -1,8 +1,9 @@
 ---
-description: 
-globs: 
+description:
+globs:
 alwaysApply: false
 ---
+
 # Shadcn UI Components
 
 Ten projekt wykorzystuje @shadcn/ui dla komponentów interfejsu użytkownika. Są to pięknie zaprojektowane, dostępne komponenty, które można dostosować do swojej aplikacji.
@@ -16,9 +17,9 @@ Komponenty są dostępne w folderze `src/components/ui`, zgodnie z aliasami z pl
 Zaimportuj komponent zgodnie ze skonfigurowanym aliasem `@/`
 
 ```tsx
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 ```
 
 Przykładowe wykorzsytanie komponnetów:
@@ -46,7 +47,6 @@ Wiele innych komponentów jest dostępnych, ale nie są one obecnie zainstalowan
 
 Aby zainstalować nowy komponent, wykorzystaj shadcn CLI
 
-
 ```bash
 npx shadcn@latest add [component-name]
 ```
@@ -62,37 +62,64 @@ Ważne: `npx shadcn-ui@latest` zostało wycofane, korzystaj z `npx shadcn@latest
 Niektóre popularne komponenty to:
 
 - Accordion
+- Alert Dialog
 - Alert
-- AlertDialog
-- AspectRatio
+- Aspect Ratio
 - Avatar
+- Badge
+- Breadcrumb
+- Button Group
+- Button
 - Calendar
+- Card
+- Carousel
+- Chart
 - Checkbox
 - Collapsible
+- Combobox
 - Command
-- ContextMenu
-- DataTable
-- DatePicker
+- Context Menu
+- Data Table
+- Date Picker
+- Dialog
+- Drawer
 - Dropdown Menu
+- Empty
+- Field
 - Form
 - Hover Card
+- Input Group
+- Input OTP
+- Input
+- Item
+- Kbd
+- Label
 - Menubar
+- Native Select
 - Navigation Menu
+- Pagination
 - Popover
 - Progress
 - Radio Group
-- ScrollArea
+- Resizable
+- Scroll Area
 - Select
 - Separator
 - Sheet
+- Sidebar
 - Skeleton
 - Slider
+- Sonner
+- Spinner
 - Switch
 - Table
+- Tabs
 - Textarea
-- Sonner (previously Toast)
+- Toast
+- Toggle Group
 - Toggle
 - Tooltip
+- Typography
 
 ## Component Styling
 

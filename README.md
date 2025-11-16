@@ -4,7 +4,7 @@
 
 [![Build](https://img.shields.io/badge/build-GitHub%20Actions-informational.svg)](#)
 [![Status](https://img.shields.io/badge/status-MVP%20in%20development-blue.svg)](#)
-[![License](https://img.shields.io/badge/license-TBD-lightgrey.svg)](#license)
+[![License](https://img.shields.io/badge/license-MIT-lightgrey.svg)](#license)
 
 ---
 
@@ -57,7 +57,7 @@
 
 - **Frontend:** Astro 5, React 19 (for interactive islands), TypeScript 5, Tailwind CSS 4, shadcn/ui components.
 - **Backend/BaaS:** Supabase (PostgreSQL, authentication, SDKs).
-- **AI Gateway:** OpenRouter.ai (broad model choice + spend limits).
+- **AI Gateway:** AI SDK v5 (broad model choice + spend limits).
 - **CI/CD & Hosting:** GitHub Actions pipelines; deploy as a Docker image (e.g., DigitalOcean).
 
 > The repository also includes modern developer tooling: ESLint 9 with plugins (incl. React Compiler), Prettier (with Astro plugin), Husky + lint-staged, and TypeScript ESLint.
@@ -93,8 +93,8 @@ Create a `.env` file in the project root with the following variables (example n
 SUPABASE_URL=<your-supabase-project-url>
 SUPABASE_KEY=<your-supabase-anon-key>
 
-# OpenRouter (AI generation)
-OPENROUTER_API_KEY=<your-openrouter-api-key>
+# AI SDK v5 (AI generation)
+OPENAI_API_KEY=<your-open-ai-api-key>
 
 ```
 
@@ -191,4 +191,4 @@ This project is released under the **MIT License**.
 
 ---
 
-_Made with Astro + React, powered by Supabase and OpenRouter._
+_Made with Astro + React, powered by Supabase and AI SDK v5._

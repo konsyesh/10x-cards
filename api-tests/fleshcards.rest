@@ -1,0 +1,1384 @@
+# ============================================================================
+# TEST 1: Sukces - Pojedyncza karta manualna
+# ============================================================================
+POST http://localhost:3000/api/flashcards HTTP/1.1
+Content-Type: application/json
+
+{
+  "flashcards": [
+    {
+      "front": "Co to jest fotosynteza?",
+      "back": "Proces biologiczny zamieniający energię światła na energię chemiczną",
+      "source": "manual",
+      "generation_id": null
+    }
+  ],
+  "collection_id": null
+}
+
+###
+
+# ============================================================================
+# TEST 2: Sukces - Wiele kart z różnymi źródłami
+# ============================================================================
+POST http://localhost:3000/api/flashcards HTTP/1.1
+Content-Type: application/json
+
+{
+  "flashcards": [
+    {
+      "front": "Karta 1?",
+      "back": "Odpowiedź 1",
+      "source": "manual"
+    },
+    {
+      "front": "Karta 2?",
+      "back": "Odpowiedź 2 wygenerowana przez AI bez edycji",
+      "source": "ai-full"
+    },
+    {
+      "front": "Karta 3?",
+      "back": "Odpowiedź 3 wygenerowana przez AI z edycją",
+      "source": "ai-edited",
+      "generation_id": 1
+    }
+  ],
+  "collection_id": null
+}
+
+###
+
+# ============================================================================
+# TEST 3: VALIDATION_ERROR - Pusta tablica flashcards
+# ============================================================================
+POST http://localhost:3000/api/flashcards HTTP/1.1
+Content-Type: application/json
+
+{
+  "flashcards": [],
+  "collection_id": null
+}
+
+###
+
+# ============================================================================
+# TEST 4: VALIDATION_ERROR - Zbyt wiele kart (> 100)
+# (flashcards ma 101 elementów -> powinno wywołać błąd walidacji)
+# ============================================================================
+POST http://localhost:3000/api/flashcards HTTP/1.1
+Content-Type: application/json
+
+{
+  "flashcards": [
+    {
+      "front": "K1?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K2?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K3?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K4?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K5?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K6?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K7?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K8?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K9?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K10?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K11?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K12?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K13?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K14?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K15?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K16?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K17?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K18?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K19?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K20?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K21?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K22?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K23?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K24?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K25?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K26?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K27?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K28?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K29?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K30?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K31?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K32?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K33?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K34?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K35?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K36?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K37?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K38?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K39?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K40?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K41?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K42?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K43?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K44?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K45?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K46?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K47?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K48?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K49?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K50?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K51?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K52?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K53?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K54?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K55?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K56?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K57?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K58?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K59?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K60?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K61?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K62?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K63?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K64?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K65?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K66?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K67?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K68?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K69?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K70?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K71?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K72?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K73?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K74?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K75?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K76?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K77?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K78?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K79?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K80?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K81?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K82?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K83?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K84?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K85?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K86?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K87?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K88?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K89?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K90?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K91?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K92?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K93?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K94?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K95?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K96?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K97?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K98?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K99?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K100?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    },
+    {
+      "front": "K101?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    }
+  ],
+  "collection_id": null
+}
+
+###
+
+# ============================================================================
+# TEST 5: VALIDATION_ERROR - Pusty front (< 1 znak)
+# ============================================================================
+POST http://localhost:3000/api/flashcards HTTP/1.1
+Content-Type: application/json
+
+{
+  "flashcards": [
+    {
+      "front": "",
+      "back": "Odpowiedź",
+      "source": "manual"
+    }
+  ],
+  "collection_id": null
+}
+
+###
+
+# ============================================================================
+# TEST 6: VALIDATION_ERROR - Front za długi (> 200 znaków)
+# front = 201 znaków 'a'
+# ============================================================================
+POST http://localhost:3000/api/flashcards HTTP/1.1
+Content-Type: application/json
+
+{
+  "flashcards": [
+    {
+      "front": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "back": "Odpowiedź",
+      "source": "manual"
+    }
+  ],
+  "collection_id": null
+}
+
+###
+
+# ============================================================================
+# TEST 7: VALIDATION_ERROR - Pusty back (< 1 znak)
+# ============================================================================
+POST http://localhost:3000/api/flashcards HTTP/1.1
+Content-Type: application/json
+
+{
+  "flashcards": [
+    {
+      "front": "Pytanie?",
+      "back": "",
+      "source": "manual"
+    }
+  ],
+  "collection_id": null
+}
+
+###
+
+# ============================================================================
+# TEST 8: VALIDATION_ERROR - Back za długi (> 500 znaków)
+# back = 501 znaków 'a'
+# ============================================================================
+POST http://localhost:3000/api/flashcards HTTP/1.1
+Content-Type: application/json
+
+{
+  "flashcards": [
+    {
+      "front": "Pytanie?",
+      "back": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "source": "manual"
+    }
+  ],
+  "collection_id": null
+}
+
+###
+
+# ============================================================================
+# TEST 9: VALIDATION_ERROR - Nieprawidłowy source
+# ============================================================================
+POST http://localhost:3000/api/flashcards HTTP/1.1
+Content-Type: application/json
+
+{
+  "flashcards": [
+    {
+      "front": "Pytanie?",
+      "back": "Odpowiedź",
+      "source": "invalid-source"
+    }
+  ],
+  "collection_id": null
+}
+
+###
+
+# ============================================================================
+# TEST 10: VALIDATION_ERROR - Niepoprawny JSON
+# ============================================================================
+POST http://localhost:3000/api/flashcards HTTP/1.1
+Content-Type: application/json
+
+{invalid json}
+
+###
+
+# ============================================================================
+# TEST 11: VALIDATION_ERROR - Nieprawidłowy generation_id (ujemny)
+# ============================================================================
+POST http://localhost:3000/api/flashcards HTTP/1.1
+Content-Type: application/json
+
+{
+  "flashcards": [
+    {
+      "front": "Pytanie?",
+      "back": "Odpowiedź",
+      "source": "ai-full",
+      "generation_id": -1
+    }
+  ],
+  "collection_id": null
+}
+
+###
+
+# ============================================================================
+# TEST 12: VALIDATION_ERROR - generation_id nie jest liczbą
+# ============================================================================
+POST http://localhost:3000/api/flashcards HTTP/1.1
+Content-Type: application/json
+
+{
+  "flashcards": [
+    {
+      "front": "Pytanie?",
+      "back": "Odpowiedź",
+      "source": "ai-full",
+      "generation_id": "abc"
+    }
+  ],
+  "collection_id": null
+}
+
+###
+
+# ============================================================================
+# TEST 13: VALIDATION_ERROR - Brak pola source
+# ============================================================================
+POST http://localhost:3000/api/flashcards HTTP/1.1
+Content-Type: application/json
+
+{
+  "flashcards": [
+    {
+      "front": "Pytanie?",
+      "back": "Odpowiedź"
+    }
+  ],
+  "collection_id": null
+}
+
+###
+
+# ============================================================================
+# TEST 14: VALIDATION_ERROR - collection_id nie jest liczbą
+# ============================================================================
+POST http://localhost:3000/api/flashcards HTTP/1.1
+Content-Type: application/json
+
+{
+  "flashcards": [
+    {
+      "front": "Pytanie?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    }
+  ],
+  "collection_id": "invalid"
+}
+
+###
+
+# ============================================================================
+# TEST 15: RESOURCE_NOT_FOUND (404) - Generation nie znaleziona
+# ============================================================================
+POST http://localhost:3000/api/flashcards HTTP/1.1
+Content-Type: application/json
+
+{
+  "flashcards": [
+    {
+      "front": "Pytanie?",
+      "back": "Odpowiedź",
+      "source": "ai-full",
+      "generation_id": 99999
+    }
+  ],
+  "collection_id": null
+}
+
+###
+
+# ============================================================================
+# TEST 16: RESOURCE_NOT_FOUND (404) - Collection nie znaleziona
+# ============================================================================
+POST http://localhost:3000/api/flashcards HTTP/1.1
+Content-Type: application/json
+
+{
+  "flashcards": [
+    {
+      "front": "Pytanie?",
+      "back": "Odpowiedź",
+      "source": "manual"
+    }
+  ],
+  "collection_id": 99999
+}
+
+###
+
+# ============================================================================
+# TEST 17: Granica - Dokładnie 100 kart (sukces)
+# flashcards ma dokładnie 100 elementów
+# ============================================================================
+POST http://localhost:3000/api/flashcards HTTP/1.1
+Content-Type: application/json
+
+{
+  "flashcards": [
+    {
+      "front": "Q1?",
+      "back": "A1",
+      "source": "manual"
+    },
+    {
+      "front": "Q2?",
+      "back": "A2",
+      "source": "manual"
+    },
+    {
+      "front": "Q3?",
+      "back": "A3",
+      "source": "manual"
+    },
+    {
+      "front": "Q4?",
+      "back": "A4",
+      "source": "manual"
+    },
+    {
+      "front": "Q5?",
+      "back": "A5",
+      "source": "manual"
+    },
+    {
+      "front": "Q6?",
+      "back": "A6",
+      "source": "manual"
+    },
+    {
+      "front": "Q7?",
+      "back": "A7",
+      "source": "manual"
+    },
+    {
+      "front": "Q8?",
+      "back": "A8",
+      "source": "manual"
+    },
+    {
+      "front": "Q9?",
+      "back": "A9",
+      "source": "manual"
+    },
+    {
+      "front": "Q10?",
+      "back": "A10",
+      "source": "manual"
+    },
+    {
+      "front": "Q11?",
+      "back": "A11",
+      "source": "manual"
+    },
+    {
+      "front": "Q12?",
+      "back": "A12",
+      "source": "manual"
+    },
+    {
+      "front": "Q13?",
+      "back": "A13",
+      "source": "manual"
+    },
+    {
+      "front": "Q14?",
+      "back": "A14",
+      "source": "manual"
+    },
+    {
+      "front": "Q15?",
+      "back": "A15",
+      "source": "manual"
+    },
+    {
+      "front": "Q16?",
+      "back": "A16",
+      "source": "manual"
+    },
+    {
+      "front": "Q17?",
+      "back": "A17",
+      "source": "manual"
+    },
+    {
+      "front": "Q18?",
+      "back": "A18",
+      "source": "manual"
+    },
+    {
+      "front": "Q19?",
+      "back": "A19",
+      "source": "manual"
+    },
+    {
+      "front": "Q20?",
+      "back": "A20",
+      "source": "manual"
+    },
+    {
+      "front": "Q21?",
+      "back": "A21",
+      "source": "manual"
+    },
+    {
+      "front": "Q22?",
+      "back": "A22",
+      "source": "manual"
+    },
+    {
+      "front": "Q23?",
+      "back": "A23",
+      "source": "manual"
+    },
+    {
+      "front": "Q24?",
+      "back": "A24",
+      "source": "manual"
+    },
+    {
+      "front": "Q25?",
+      "back": "A25",
+      "source": "manual"
+    },
+    {
+      "front": "Q26?",
+      "back": "A26",
+      "source": "manual"
+    },
+    {
+      "front": "Q27?",
+      "back": "A27",
+      "source": "manual"
+    },
+    {
+      "front": "Q28?",
+      "back": "A28",
+      "source": "manual"
+    },
+    {
+      "front": "Q29?",
+      "back": "A29",
+      "source": "manual"
+    },
+    {
+      "front": "Q30?",
+      "back": "A30",
+      "source": "manual"
+    },
+    {
+      "front": "Q31?",
+      "back": "A31",
+      "source": "manual"
+    },
+    {
+      "front": "Q32?",
+      "back": "A32",
+      "source": "manual"
+    },
+    {
+      "front": "Q33?",
+      "back": "A33",
+      "source": "manual"
+    },
+    {
+      "front": "Q34?",
+      "back": "A34",
+      "source": "manual"
+    },
+    {
+      "front": "Q35?",
+      "back": "A35",
+      "source": "manual"
+    },
+    {
+      "front": "Q36?",
+      "back": "A36",
+      "source": "manual"
+    },
+    {
+      "front": "Q37?",
+      "back": "A37",
+      "source": "manual"
+    },
+    {
+      "front": "Q38?",
+      "back": "A38",
+      "source": "manual"
+    },
+    {
+      "front": "Q39?",
+      "back": "A39",
+      "source": "manual"
+    },
+    {
+      "front": "Q40?",
+      "back": "A40",
+      "source": "manual"
+    },
+    {
+      "front": "Q41?",
+      "back": "A41",
+      "source": "manual"
+    },
+    {
+      "front": "Q42?",
+      "back": "A42",
+      "source": "manual"
+    },
+    {
+      "front": "Q43?",
+      "back": "A43",
+      "source": "manual"
+    },
+    {
+      "front": "Q44?",
+      "back": "A44",
+      "source": "manual"
+    },
+    {
+      "front": "Q45?",
+      "back": "A45",
+      "source": "manual"
+    },
+    {
+      "front": "Q46?",
+      "back": "A46",
+      "source": "manual"
+    },
+    {
+      "front": "Q47?",
+      "back": "A47",
+      "source": "manual"
+    },
+    {
+      "front": "Q48?",
+      "back": "A48",
+      "source": "manual"
+    },
+    {
+      "front": "Q49?",
+      "back": "A49",
+      "source": "manual"
+    },
+    {
+      "front": "Q50?",
+      "back": "A50",
+      "source": "manual"
+    },
+    {
+      "front": "Q51?",
+      "back": "A51",
+      "source": "manual"
+    },
+    {
+      "front": "Q52?",
+      "back": "A52",
+      "source": "manual"
+    },
+    {
+      "front": "Q53?",
+      "back": "A53",
+      "source": "manual"
+    },
+    {
+      "front": "Q54?",
+      "back": "A54",
+      "source": "manual"
+    },
+    {
+      "front": "Q55?",
+      "back": "A55",
+      "source": "manual"
+    },
+    {
+      "front": "Q56?",
+      "back": "A56",
+      "source": "manual"
+    },
+    {
+      "front": "Q57?",
+      "back": "A57",
+      "source": "manual"
+    },
+    {
+      "front": "Q58?",
+      "back": "A58",
+      "source": "manual"
+    },
+    {
+      "front": "Q59?",
+      "back": "A59",
+      "source": "manual"
+    },
+    {
+      "front": "Q60?",
+      "back": "A60",
+      "source": "manual"
+    },
+    {
+      "front": "Q61?",
+      "back": "A61",
+      "source": "manual"
+    },
+    {
+      "front": "Q62?",
+      "back": "A62",
+      "source": "manual"
+    },
+    {
+      "front": "Q63?",
+      "back": "A63",
+      "source": "manual"
+    },
+    {
+      "front": "Q64?",
+      "back": "A64",
+      "source": "manual"
+    },
+    {
+      "front": "Q65?",
+      "back": "A65",
+      "source": "manual"
+    },
+    {
+      "front": "Q66?",
+      "back": "A66",
+      "source": "manual"
+    },
+    {
+      "front": "Q67?",
+      "back": "A67",
+      "source": "manual"
+    },
+    {
+      "front": "Q68?",
+      "back": "A68",
+      "source": "manual"
+    },
+    {
+      "front": "Q69?",
+      "back": "A69",
+      "source": "manual"
+    },
+    {
+      "front": "Q70?",
+      "back": "A70",
+      "source": "manual"
+    },
+    {
+      "front": "Q71?",
+      "back": "A71",
+      "source": "manual"
+    },
+    {
+      "front": "Q72?",
+      "back": "A72",
+      "source": "manual"
+    },
+    {
+      "front": "Q73?",
+      "back": "A73",
+      "source": "manual"
+    },
+    {
+      "front": "Q74?",
+      "back": "A74",
+      "source": "manual"
+    },
+    {
+      "front": "Q75?",
+      "back": "A75",
+      "source": "manual"
+    },
+    {
+      "front": "Q76?",
+      "back": "A76",
+      "source": "manual"
+    },
+    {
+      "front": "Q77?",
+      "back": "A77",
+      "source": "manual"
+    },
+    {
+      "front": "Q78?",
+      "back": "A78",
+      "source": "manual"
+    },
+    {
+      "front": "Q79?",
+      "back": "A79",
+      "source": "manual"
+    },
+    {
+      "front": "Q80?",
+      "back": "A80",
+      "source": "manual"
+    },
+    {
+      "front": "Q81?",
+      "back": "A81",
+      "source": "manual"
+    },
+    {
+      "front": "Q82?",
+      "back": "A82",
+      "source": "manual"
+    },
+    {
+      "front": "Q83?",
+      "back": "A83",
+      "source": "manual"
+    },
+    {
+      "front": "Q84?",
+      "back": "A84",
+      "source": "manual"
+    },
+    {
+      "front": "Q85?",
+      "back": "A85",
+      "source": "manual"
+    },
+    {
+      "front": "Q86?",
+      "back": "A86",
+      "source": "manual"
+    },
+    {
+      "front": "Q87?",
+      "back": "A87",
+      "source": "manual"
+    },
+    {
+      "front": "Q88?",
+      "back": "A88",
+      "source": "manual"
+    },
+    {
+      "front": "Q89?",
+      "back": "A89",
+      "source": "manual"
+    },
+    {
+      "front": "Q90?",
+      "back": "A90",
+      "source": "manual"
+    },
+    {
+      "front": "Q91?",
+      "back": "A91",
+      "source": "manual"
+    },
+    {
+      "front": "Q92?",
+      "back": "A92",
+      "source": "manual"
+    },
+    {
+      "front": "Q93?",
+      "back": "A93",
+      "source": "manual"
+    },
+    {
+      "front": "Q94?",
+      "back": "A94",
+      "source": "manual"
+    },
+    {
+      "front": "Q95?",
+      "back": "A95",
+      "source": "manual"
+    },
+    {
+      "front": "Q96?",
+      "back": "A96",
+      "source": "manual"
+    },
+    {
+      "front": "Q97?",
+      "back": "A97",
+      "source": "manual"
+    },
+    {
+      "front": "Q98?",
+      "back": "A98",
+      "source": "manual"
+    },
+    {
+      "front": "Q99?",
+      "back": "A99",
+      "source": "manual"
+    },
+    {
+      "front": "Q100?",
+      "back": "A100",
+      "source": "manual"
+    }
+  ],
+  "collection_id": null
+}
+
+###
+
+# ============================================================================
+# TEST 18: Granica - Dokładnie 200 znaków w front (sukces)
+# front = dokładnie 200 'a'
+# ============================================================================
+POST http://localhost:3000/api/flashcards HTTP/1.1
+Content-Type: application/json
+
+{
+  "flashcards": [
+    {
+      "front": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "back": "Odpowiedź",
+      "source": "manual"
+    }
+  ],
+  "collection_id": null
+}
+
+###
+
+# ============================================================================
+# TEST 19: Granica - Dokładnie 500 znaków w back (sukces)
+# back = dokładnie 500 'a'
+# ============================================================================
+POST http://localhost:3000/api/flashcards HTTP/1.1
+Content-Type: application/json
+
+{
+  "flashcards": [
+    {
+      "front": "Pytanie?",
+      "back": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "source": "manual"
+    }
+  ],
+  "collection_id": null
+}
+
+###
+
+# ============================================================================
+# TEST 20: Sukces - Karty z generation_id (aktualizacja metryk)
+# ============================================================================
+POST http://localhost:3000/api/flashcards HTTP/1.1
+Content-Type: application/json
+
+{
+  "flashcards": [
+    {
+      "front": "Karta z AI - bez edycji?",
+      "back": "Odpowiedź wygenerowana",
+      "source": "ai-full",
+      "generation_id": 1
+    },
+    {
+      "front": "Karta z AI - z edycją?",
+      "back": "Odpowiedź wygenerowana i edytowana",
+      "source": "ai-edited",
+      "generation_id": 1
+    }
+  ],
+  "collection_id": null
+}

@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    name: Lint, Test, Build
+    runs-on: ubuntu-latest
+    env:
+      CI: true
+      # Minimal defaults to allow build without secrets
+      PUBLIC_SITE_URL: http://localhost:3000
+      SUPABASE_URL: http://localhost:54321
+      SUPABASE_KEY: test-anon-key
+      ASTRO_TELEMETRY_DISABLED: 1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests (Vitest)
+        run: npm test -- --run
+
+      - name: Build (production)
+        run: npm run build
+

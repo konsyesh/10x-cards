@@ -10,9 +10,7 @@ describe("UnsavedChangesModal", () => {
       const onDiscard = vi.fn();
       const onCancel = vi.fn();
 
-      render(
-        <UnsavedChangesModal isOpen={true} onSave={onSave} onDiscard={onDiscard} onCancel={onCancel} />
-      );
+      render(<UnsavedChangesModal isOpen={true} onSave={onSave} onDiscard={onDiscard} onCancel={onCancel} />);
 
       expect(screen.getByText(/niezapisane zmiany/i)).toBeInTheDocument();
       expect(screen.getByText(/masz niezapisane karty/i)).toBeInTheDocument();
@@ -26,9 +24,7 @@ describe("UnsavedChangesModal", () => {
       const onDiscard = vi.fn();
       const onCancel = vi.fn();
 
-      render(
-        <UnsavedChangesModal isOpen={true} onSave={onSave} onDiscard={onDiscard} onCancel={onCancel} />
-      );
+      render(<UnsavedChangesModal isOpen={true} onSave={onSave} onDiscard={onDiscard} onCancel={onCancel} />);
 
       await user.click(screen.getByRole("button", { name: /zapisz karty/i }));
 
@@ -41,9 +37,7 @@ describe("UnsavedChangesModal", () => {
       const onDiscard = vi.fn();
       const onCancel = vi.fn();
 
-      render(
-        <UnsavedChangesModal isOpen={true} onSave={onSave} onDiscard={onDiscard} onCancel={onCancel} />
-      );
+      render(<UnsavedChangesModal isOpen={true} onSave={onSave} onDiscard={onDiscard} onCancel={onCancel} />);
 
       await user.click(screen.getByRole("button", { name: /porzuć zmiany/i }));
 
@@ -56,9 +50,7 @@ describe("UnsavedChangesModal", () => {
       const onDiscard = vi.fn();
       const onCancel = vi.fn();
 
-      render(
-        <UnsavedChangesModal isOpen={true} onSave={onSave} onDiscard={onDiscard} onCancel={onCancel} />
-      );
+      render(<UnsavedChangesModal isOpen={true} onSave={onSave} onDiscard={onDiscard} onCancel={onCancel} />);
 
       await user.click(screen.getByRole("button", { name: /anuluj/i }));
 
@@ -71,17 +63,10 @@ describe("UnsavedChangesModal", () => {
       const onCancel = vi.fn();
 
       render(
-        <UnsavedChangesModal
-          isOpen={true}
-          onSave={onSave}
-          onDiscard={onDiscard}
-          onCancel={onCancel}
-          isLoading={true}
-        />
+        <UnsavedChangesModal isOpen={true} onSave={onSave} onDiscard={onDiscard} onCancel={onCancel} isLoading={true} />
       );
 
       expect(screen.getByRole("button", { name: /zapisuję.../i })).toBeDisabled();
     });
   });
 });
-

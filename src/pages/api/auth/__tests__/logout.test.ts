@@ -167,4 +167,3 @@ describe("pages/api/auth/logout.ts", () => {
     });
   });
 });
-

@@ -53,10 +53,10 @@ Przykład (PRZYKŁAD – dostosuj do swojej domeny):
 import { defineDomain } from "@/lib/errors/registry";
 
 export const OrdersErrors = defineDomain("orders", {
-  NotFound:         { code: "orders/not-found",         status: 404, title: "errors.orders.not_found" },
+  NotFound: { code: "orders/not-found", status: 404, title: "errors.orders.not_found" },
   ValidationFailed: { code: "orders/validation-failed", status: 400, title: "errors.orders.validation_failed" },
-  SaveFailed:       { code: "orders/save-failed",       status: 500, title: "errors.orders.save_failed" },
-  Conflict:         { code: "orders/conflict",          status: 409, title: "errors.orders.conflict" },
+  SaveFailed: { code: "orders/save-failed", status: 500, title: "errors.orders.save_failed" },
+  Conflict: { code: "orders/conflict", status: 409, title: "errors.orders.conflict" },
 });
 ```
 
@@ -178,4 +178,3 @@ export const POST: APIRoute = withProblemHandling(async ({ request }) => {
 ---
 
 Ten dokument to „wzorzec dla serwisu”. Nazwy domen (`orders`, itp.) są przykładami – dostosuj do faktycznych serwisów w projekcie, zachowując stałe kontrakty i strukturę.
-

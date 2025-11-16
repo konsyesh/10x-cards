@@ -62,4 +62,3 @@ describe("CandidatesSection", () => {
     expect(screen.queryByText(/razem:/i)).not.toBeInTheDocument();
   });
 });
-

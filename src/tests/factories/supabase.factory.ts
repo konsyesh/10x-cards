@@ -129,7 +129,9 @@ export const createMockSupabaseClient = (): {
     auth: {
       getUser: authGetUserMock,
       getSession: authGetSessionMock,
-      onAuthStateChange: vi.fn().mockReturnValue(() => {}),
+      onAuthStateChange: vi.fn().mockReturnValue(() => {
+        // Empty unsubscribe function
+      }),
       signUp: vi.fn(),
       signInWithPassword: vi.fn(),
       signOut: vi.fn(),
@@ -217,7 +219,7 @@ export const createMockCollection = (overrides?: Partial<any>) => ({
  *   .data([{ id: '1', front: 'Q?', back: 'A' }]);
  * ```
  */
-export const mockSupabaseQuery = (fromMock: vi.Mock, tableName: string) => {
+export const mockSupabaseQuery = (fromMock: vi.Mock, _tableName: string) => {
   const builder = createMockQueryBuilder();
 
   fromMock.mockReturnValue(builder);

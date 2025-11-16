@@ -60,7 +60,12 @@ describe("RegisterForm", () => {
       const passwordInputs = screen.getAllByLabelText(/hasło/i);
       expect(passwordInputs.length).toBeGreaterThanOrEqual(1);
       expect(screen.getByLabelText(/potwierdź hasło/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/akceptuję/i)).toBeInTheDocument();
+      // Użyj getAllByLabelText i sprawdź że jest dokładnie jeden element związany z checkboxem
+      // (FormLabel zawiera też button, więc może być wiele elementów pasujących)
+      const acceptLabels = screen.getAllByLabelText(/akceptuję/i);
+      expect(acceptLabels.length).toBeGreaterThanOrEqual(1);
+      // Sprawdź czy checkbox jest dostępny
+      expect(screen.getByRole("checkbox", { name: /akceptuję/i })).toBeInTheDocument();
     });
   });
 
@@ -76,7 +81,8 @@ describe("RegisterForm", () => {
       const passwordInputs = screen.getAllByLabelText(/hasło/i);
       await user.type(passwordInputs[0], "Password123");
       await user.type(screen.getByLabelText(/potwierdź hasło/i), "Password123");
-      await user.click(screen.getByLabelText(/akceptuję/i));
+      // Użyj getByRole zamiast getByLabelText, żeby kliknąć checkbox bezpośrednio
+      await user.click(screen.getByRole("checkbox", { name: /akceptuję/i }));
       await user.click(screen.getByRole("button", { name: /zarejestruj się/i }));
 
       await waitFor(() => {
@@ -98,7 +104,8 @@ describe("RegisterForm", () => {
       const passwordInputs = screen.getAllByLabelText(/hasło/i);
       await user.type(passwordInputs[0], "Password123");
       await user.type(screen.getByLabelText(/potwierdź hasło/i), "Password123");
-      await user.click(screen.getByLabelText(/akceptuję/i));
+      // Użyj getByRole zamiast getByLabelText, żeby kliknąć checkbox bezpośrednio
+      await user.click(screen.getByRole("checkbox", { name: /akceptuję/i }));
       await user.click(screen.getByRole("button", { name: /zarejestruj się/i }));
 
       await waitFor(() => {
@@ -130,7 +137,8 @@ describe("RegisterForm", () => {
       const passwordInputs = screen.getAllByLabelText(/hasło/i);
       await user.type(passwordInputs[0], "Password123");
       await user.type(screen.getByLabelText(/potwierdź hasło/i), "Password123");
-      await user.click(screen.getByLabelText(/akceptuję/i));
+      // Użyj getByRole zamiast getByLabelText, żeby kliknąć checkbox bezpośrednio
+      await user.click(screen.getByRole("checkbox", { name: /akceptuję/i }));
       await user.click(screen.getByRole("button", { name: /zarejestruj się/i }));
 
       await waitFor(() => {
@@ -165,7 +173,8 @@ describe("RegisterForm", () => {
       const passwordInputs = screen.getAllByLabelText(/hasło/i);
       await user.type(passwordInputs[0], "Password123");
       await user.type(screen.getByLabelText(/potwierdź hasło/i), "Password123");
-      await user.click(screen.getByLabelText(/akceptuję/i));
+      // Użyj getByRole zamiast getByLabelText, żeby kliknąć checkbox bezpośrednio
+      await user.click(screen.getByRole("checkbox", { name: /akceptuję/i }));
       await user.click(screen.getByRole("button", { name: /zarejestruj się/i }));
 
       await waitFor(() => {
@@ -176,4 +185,3 @@ describe("RegisterForm", () => {
     });
   });
 });
-

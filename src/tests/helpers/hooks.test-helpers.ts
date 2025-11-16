@@ -62,4 +62,3 @@ export function createMockCandidates(count: number, overrides?: Partial<Candidat
     })
   );
 }
-

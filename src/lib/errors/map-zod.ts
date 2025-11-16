@@ -12,7 +12,7 @@ import { authErrors } from "@/services/auth/auth.errors";
 /**
  * Mapuj ZodError na flashcard/validation-failed
  * Zawiera pełny flatten() w meta dla frontendu
- * 
+ *
  * Używane dla błędów walidacji w domenie flashcard
  */
 export function fromZod(err: ZodError): typeof flashcardErrors.creators.ValidationFailed {
@@ -26,7 +26,7 @@ export function fromZod(err: ZodError): typeof flashcardErrors.creators.Validati
 /**
  * Mapuj ZodError na auth/validation-failed
  * Zawiera pełny flatten() w meta dla frontendu
- * 
+ *
  * Używane dla błędów walidacji w endpointach auth
  * Zgodne z auth-spec-codex.md wymaganiem: fromZod() → auth/validation-failed
  */

@@ -60,6 +60,7 @@ export function createDomainError(error: DomainError): DomainError {
     },
     toJSON: {
       value: function () {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { cause: _cause, ...json } = error as any;
         return json;
       },

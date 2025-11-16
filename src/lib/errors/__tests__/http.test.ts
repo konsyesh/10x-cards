@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { toProblem, jsonProblem, requestId, withProblemHandling } from "../http";
 import { defineDomain } from "../registry";
-import type { DomainError, ProblemDetails } from "../index";
+import type { ProblemDetails } from "../index";
 import type { APIRoute } from "astro";
 
 describe("lib/errors/http.ts", () => {
@@ -278,4 +278,3 @@ describe("lib/errors/http.ts", () => {
     });
   });
 });
-

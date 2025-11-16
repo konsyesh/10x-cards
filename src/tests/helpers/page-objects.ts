@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { Page } from "@playwright/test";
 
 /**
  * Page Object Model Helpers for Playwright E2E Tests
@@ -13,11 +13,11 @@ export class AuthPageObject {
   constructor(private page: Page) {}
 
   async navigateToLogin() {
-    await this.page.goto('/auth/login');
+    await this.page.goto("/auth/login");
   }
 
   async navigateToRegister() {
-    await this.page.goto('/auth/register');
+    await this.page.goto("/auth/register");
   }
 
   async fillLoginForm(email: string, password: string) {
@@ -53,7 +53,7 @@ export class GeneratePageObject {
   constructor(private page: Page) {}
 
   async navigateToGenerate() {
-    await this.page.goto('/generate');
+    await this.page.goto("/generate");
   }
 
   async fillSourceText(text: string) {
@@ -126,7 +126,7 @@ export class CollectionPageObject {
   constructor(private page: Page) {}
 
   async navigateToCollections() {
-    await this.page.goto('/collections');
+    await this.page.goto("/collections");
   }
 
   async createNewCollection(name: string, description?: string) {
@@ -145,7 +145,7 @@ export class CollectionPageObject {
   async getFlashcardCount(collectionName: string) {
     const row = this.page.locator(`tr:has-text("${collectionName}")`);
     const countText = await row.locator('[data-testid="flashcard-count"]').textContent();
-    return parseInt(countText || '0');
+    return parseInt(countText || "0");
   }
 
   async deleteCollection(name: string) {
@@ -168,7 +168,7 @@ export const createBasePageObject = (page: Page) => ({
    * Wait for page to be ready
    */
   async waitForPageReady() {
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState("networkidle");
   },
 
   /**
@@ -188,7 +188,7 @@ export const createBasePageObject = (page: Page) => ({
   /**
    * Wait for and dismiss toast
    */
-  async waitAndDismissToast(type: 'error' | 'success' = 'success', timeout = 5000) {
+  async waitAndDismissToast(type: "error" | "success" = "success", timeout = 5000) {
     const selector = `[role="alert"][data-severity="${type}"]`;
     await page.waitForSelector(selector, { timeout });
     await page.click(`${selector} button[aria-label="Dismiss"]`);
@@ -198,9 +198,8 @@ export const createBasePageObject = (page: Page) => ({
    * Get current URL pathname
    */
   async getCurrentPath() {
-    return page.url().split('/').pop() || '';
+    return page.url().split("/").pop() || "";
   },
 });
 
 export type BasePageObject = ReturnType<typeof createBasePageObject>;
-

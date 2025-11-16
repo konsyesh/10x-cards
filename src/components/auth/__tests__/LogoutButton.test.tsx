@@ -60,7 +60,12 @@ describe("LogoutButton", () => {
 
     it("should show loading text when loading", async () => {
       const user = userEvent.setup();
-      vi.mocked(fetchJson).mockImplementation(() => new Promise(() => {})); // Never resolves
+      vi.mocked(fetchJson).mockImplementation(
+        () =>
+          new Promise(() => {
+            // Never resolves
+          })
+      );
 
       render(<LogoutButton />);
 
@@ -124,4 +129,3 @@ describe("LogoutButton", () => {
     });
   });
 });
-

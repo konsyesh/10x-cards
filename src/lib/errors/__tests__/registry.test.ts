@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import { defineDomain } from "../registry";
-import type { DomainError } from "../index";
 
 describe("lib/errors/registry.ts", () => {
   describe("defineDomain", () => {
@@ -114,6 +113,7 @@ describe("lib/errors/registry.ts", () => {
 
         // Create a new env object without PROBLEM_URI_TYPE
         if ((import.meta as any).env) {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { PROBLEM_URI_TYPE, ...envWithoutProblemUri } = (import.meta as any).env;
           (import.meta as any).env = envWithoutProblemUri;
         } else {

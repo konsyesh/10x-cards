@@ -2,8 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { RequestResetForm } from "../RequestResetForm";
-import { fetchJson, ApiError } from "@/lib/http/http.fetcher";
-import { toast } from "sonner";
+import { fetchJson } from "@/lib/http/http.fetcher";
 
 vi.mock("@/lib/http/http.fetcher");
 vi.mock("sonner", () => ({
@@ -59,4 +58,3 @@ describe("RequestResetForm", () => {
     });
   });
 });
-

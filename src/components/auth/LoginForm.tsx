@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -8,28 +8,9 @@ import { fetchJson, ApiError } from "@/lib/http/http.fetcher";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Field,
-  FieldContent,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
 const loginSchema = z.object({
@@ -45,8 +26,7 @@ interface LoginFormProps extends React.ComponentProps<"div"> {
 
 export function LoginForm({ className, redirectTo, ...props }: LoginFormProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
-  const finalRedirectTo = redirectTo || searchParams?.get("redirectTo") || "/generate";
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -55,6 +35,12 @@ export function LoginForm({ className, redirectTo, ...props }: LoginFormProps) {
       password: "",
     },
   });
+
+  useEffect(() => {
+    if (redirectUrl) {
+      window.location.href = redirectUrl;
+    }
+  }, [redirectUrl]);
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
@@ -70,7 +56,9 @@ export function LoginForm({ className, redirectTo, ...props }: LoginFormProps) {
       });
 
       // Redirect po sukcesie
-      window.location.href = finalRedirectTo;
+      const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+      const finalRedirectTo = redirectTo || searchParams?.get("redirectTo") || "/generate";
+      setRedirectUrl(finalRedirectTo);
     } catch (err) {
       setIsLoading(false);
 
@@ -96,9 +84,7 @@ export function LoginForm({ className, redirectTo, ...props }: LoginFormProps) {
       <Card>
         <CardHeader>
           <CardTitle>Zaloguj się do konta</CardTitle>
-          <CardDescription>
-            Wprowadź swój e-mail i hasło, aby się zalogować
-          </CardDescription>
+          <CardDescription>Wprowadź swój e-mail i hasło, aby się zalogować</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -145,12 +131,7 @@ export function LoginForm({ className, redirectTo, ...props }: LoginFormProps) {
                         </div>
                         <FieldContent>
                           <FormControl>
-                            <Input
-                              id={field.name}
-                              type="password"
-                              disabled={isLoading}
-                              {...field}
-                            />
+                            <Input id={field.name} type="password" disabled={isLoading} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FieldContent>
@@ -165,10 +146,7 @@ export function LoginForm({ className, redirectTo, ...props }: LoginFormProps) {
                   </Button>
                   <FieldDescription className="text-center">
                     Nie masz konta?{" "}
-                    <a
-                      href="/auth/register"
-                      className="underline-offset-4 hover:underline text-primary"
-                    >
+                    <a href="/auth/register" className="underline-offset-4 hover:underline text-primary">
                       Zarejestruj się
                     </a>
                   </FieldDescription>
@@ -181,4 +159,3 @@ export function LoginForm({ className, redirectTo, ...props }: LoginFormProps) {
     </div>
   );
 }
-

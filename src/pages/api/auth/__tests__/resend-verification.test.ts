@@ -7,7 +7,6 @@ import {
   verifySuccessResponse,
   createMockSupabaseClient,
 } from "@/tests/helpers";
-import { createInMemoryRateLimiter, makeKeyIpEmail } from "@/lib/http/http.rate-limit";
 
 describe("pages/api/auth/resend-verification.ts", () => {
   let mockSupabase: any;
@@ -184,7 +183,7 @@ describe("pages/api/auth/resend-verification.ts", () => {
       // Pierwsze wywołanie powinno przejść (lub zwrócić 429 jeśli limiter jest już zapełniony)
       const response = await POST(context as any);
       expect([200, 429]).toContain(response.status);
-      
+
       if (response.status === 429) {
         await verifyProblemJsonResponse(response, 429);
         const body = await response.clone().json();
@@ -261,4 +260,3 @@ describe("pages/api/auth/resend-verification.ts", () => {
     });
   });
 });
-

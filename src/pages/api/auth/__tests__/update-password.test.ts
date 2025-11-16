@@ -394,4 +394,3 @@ describe("pages/api/auth/update-password.ts", () => {
     });
   });
 });
-

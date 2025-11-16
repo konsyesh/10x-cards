@@ -1,4 +1,3 @@
-import { vi } from "vitest";
 import type { AstroGlobal } from "astro";
 
 /**
@@ -115,7 +114,9 @@ export const createMockCookies = () => {
       cookies[name] = value;
     },
     delete: (name: string) => {
-      delete cookies[name];
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { [name]: _, ...rest } = cookies;
+      Object.assign(cookies, rest);
     },
     setAll: (newCookies: { name: string; value: string }[]) => {
       newCookies.forEach(({ name, value }) => {
@@ -125,7 +126,11 @@ export const createMockCookies = () => {
     getAll: () => Object.entries(cookies).map(([name, value]) => ({ name, value })),
     has: (name: string) => name in cookies,
     clear: () => {
-      Object.keys(cookies).forEach((key) => delete cookies[key]);
+      Object.keys(cookies).forEach((key) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { [key]: _, ...rest } = cookies;
+        Object.assign(cookies, rest);
+      });
     },
   };
 };

@@ -104,4 +104,3 @@ describe("lib/errors/index.ts", () => {
     });
   });
 });
-

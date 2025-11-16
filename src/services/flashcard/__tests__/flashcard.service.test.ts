@@ -7,7 +7,6 @@ import {
   createMockCollection,
   createMockQueryBuilder,
 } from "@/tests/helpers";
-import { flashcardErrors } from "../flashcard.errors";
 
 describe("services/flashcard/flashcard.service.ts", () => {
   let supabase: any;

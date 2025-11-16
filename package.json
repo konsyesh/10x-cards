@@ -17,7 +17,9 @@
     "test:e2e:debug": "playwright test --debug",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "format": "prettier --write ."
+    "format:check": "prettier --check .",
+    "format": "prettier --write .",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.64",
@@ -51,6 +53,7 @@
     "@radix-ui/react-toggle": "^1.1.10",
     "@radix-ui/react-toggle-group": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "@sentry/node": "^10.25.0",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.76.1",
     "@tailwindcss/vite": "^4.1.13",
@@ -104,6 +107,7 @@
     "happy-dom": "^20.0.10",
     "husky": "9.1.7",
     "lint-staged": "15.5.0",
+    "prettier": "^3.3.3",
     "prettier-plugin-astro": "0.14.1",
     "supabase": "^2.51.0",
     "typescript-eslint": "8.28.0",

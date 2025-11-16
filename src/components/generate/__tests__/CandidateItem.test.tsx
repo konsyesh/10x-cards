@@ -16,15 +16,7 @@ describe("CandidateItem", () => {
       const onAccept = vi.fn();
       const onReject = vi.fn();
 
-      render(
-        <CandidateItem
-          vm={vm}
-          onChange={onChange}
-          onAccept={onAccept}
-          onReject={onReject}
-          index={0}
-        />
-      );
+      render(<CandidateItem vm={vm} onChange={onChange} onAccept={onAccept} onReject={onReject} index={0} />);
 
       expect(screen.getByText(/test question/i)).toBeInTheDocument();
       expect(screen.getByText(/test answer/i)).toBeInTheDocument();
@@ -38,14 +30,7 @@ describe("CandidateItem", () => {
       const onReject = vi.fn();
 
       const { container } = render(
-        <CandidateItem
-          vm={vm}
-          onChange={onChange}
-          onAccept={onAccept}
-          onReject={onReject}
-          index={0}
-          isFocused={true}
-        />
+        <CandidateItem vm={vm} onChange={onChange} onAccept={onAccept} onReject={onReject} index={0} isFocused={true} />
       );
 
       const card = container.querySelector('[id="card-0"]');
@@ -61,15 +46,7 @@ describe("CandidateItem", () => {
       const onAccept = vi.fn();
       const onReject = vi.fn();
 
-      render(
-        <CandidateItem
-          vm={vm}
-          onChange={onChange}
-          onAccept={onAccept}
-          onReject={onReject}
-          index={0}
-        />
-      );
+      render(<CandidateItem vm={vm} onChange={onChange} onAccept={onAccept} onReject={onReject} index={0} />);
 
       await user.click(screen.getByLabelText(/zaakceptuj kartę 1/i));
 
@@ -83,15 +60,7 @@ describe("CandidateItem", () => {
       const onAccept = vi.fn();
       const onReject = vi.fn();
 
-      render(
-        <CandidateItem
-          vm={vm}
-          onChange={onChange}
-          onAccept={onAccept}
-          onReject={onReject}
-          index={0}
-        />
-      );
+      render(<CandidateItem vm={vm} onChange={onChange} onAccept={onAccept} onReject={onReject} index={0} />);
 
       await user.click(screen.getByLabelText(/odrzuć kartę 1/i));
 
@@ -135,14 +104,7 @@ describe("CandidateItem", () => {
       const onReject = vi.fn();
 
       render(
-        <CandidateItem
-          vm={vm}
-          onChange={onChange}
-          onAccept={onAccept}
-          onReject={onReject}
-          index={0}
-          isEditing={true}
-        />
+        <CandidateItem vm={vm} onChange={onChange} onAccept={onAccept} onReject={onReject} index={0} isEditing={true} />
       );
 
       expect(screen.getByLabelText(/pytanie/i)).toBeInTheDocument();
@@ -157,14 +119,7 @@ describe("CandidateItem", () => {
       const onReject = vi.fn();
 
       render(
-        <CandidateItem
-          vm={vm}
-          onChange={onChange}
-          onAccept={onAccept}
-          onReject={onReject}
-          index={0}
-          isEditing={true}
-        />
+        <CandidateItem vm={vm} onChange={onChange} onAccept={onAccept} onReject={onReject} index={0} isEditing={true} />
       );
 
       const frontInput = screen.getByLabelText(/pytanie/i);
@@ -183,14 +138,7 @@ describe("CandidateItem", () => {
       const onReject = vi.fn();
 
       render(
-        <CandidateItem
-          vm={vm}
-          onChange={onChange}
-          onAccept={onAccept}
-          onReject={onReject}
-          index={0}
-          isEditing={true}
-        />
+        <CandidateItem vm={vm} onChange={onChange} onAccept={onAccept} onReject={onReject} index={0} isEditing={true} />
       );
 
       expect(screen.getByText(/maksimum 200 znaków/i)).toBeInTheDocument();
@@ -206,18 +154,10 @@ describe("CandidateItem", () => {
       const onReject = vi.fn();
 
       render(
-        <CandidateItem
-          vm={vm}
-          onChange={onChange}
-          onAccept={onAccept}
-          onReject={onReject}
-          index={0}
-          isEditing={true}
-        />
+        <CandidateItem vm={vm} onChange={onChange} onAccept={onAccept} onReject={onReject} index={0} isEditing={true} />
       );
 
       expect(screen.getByRole("button", { name: /gotowe/i })).toBeDisabled();
     });
   });
 });
-

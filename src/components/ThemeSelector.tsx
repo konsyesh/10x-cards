@@ -48,8 +48,6 @@ export function ThemeSelector() {
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
 
-  const currentThemeLabel = AVAILABLE_THEMES.find((t) => t.id === theme)?.label || "Theme";
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

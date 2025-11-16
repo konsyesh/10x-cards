@@ -23,4 +23,3 @@ describe("useApi", () => {
     expect(result.current.ApiError).toBe(firstApiError);
   });
 });
-

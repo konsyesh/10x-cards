@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { CandidatesList } from "../CandidatesList";
-import { createMockCandidateVM, createMockCandidates } from "@/tests/helpers";
+import { createMockCandidates } from "@/tests/helpers";
 
 vi.mock("@/hooks/use-mobile", () => ({
   useMediaQuery: vi.fn(() => false), // Desktop by default
@@ -15,14 +15,7 @@ describe("CandidatesList", () => {
       const onAccept = vi.fn();
       const onReject = vi.fn();
 
-      render(
-        <CandidatesList
-          items={items}
-          onItemChange={onItemChange}
-          onAccept={onAccept}
-          onReject={onReject}
-        />
-      );
+      render(<CandidatesList items={items} onItemChange={onItemChange} onAccept={onAccept} onReject={onReject} />);
 
       expect(screen.getAllByText(/question/i)).toHaveLength(3);
     });
@@ -57,4 +50,3 @@ describe("CandidatesList", () => {
     });
   });
 });
-

@@ -78,6 +78,7 @@ export const GenerateView: React.FC = () => {
       });
       // Opcjonalnie — logi diagnostyczne
       if (saveState.errorCode) {
+        // eslint-disable-next-line no-console
         console.error("[GenerateView] Save error:", {
           code: saveState.errorCode,
           message: saveState.message,

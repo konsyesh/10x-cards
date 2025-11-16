@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -8,28 +8,9 @@ import { fetchJson, ApiError } from "@/lib/http/http.fetcher";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Field,
-  FieldContent,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
 const updatePasswordSchema = z
@@ -49,10 +30,11 @@ const updatePasswordSchema = z
 
 type UpdatePasswordFormData = z.infer<typeof updatePasswordSchema>;
 
-interface UpdatePasswordFormProps extends React.ComponentProps<"div"> {}
+type UpdatePasswordFormProps = React.ComponentProps<"div">;
 
 export function UpdatePasswordForm({ className, ...props }: UpdatePasswordFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [shouldRedirect, setShouldRedirect] = useState(false);
 
   const form = useForm<UpdatePasswordFormData>({
     resolver: zodResolver(updatePasswordSchema),
@@ -61,6 +43,17 @@ export function UpdatePasswordForm({ className, ...props }: UpdatePasswordFormPr
       confirmPassword: "",
     },
   });
+
+  useEffect(() => {
+    if (shouldRedirect) {
+      const timer = setTimeout(() => {
+        if (typeof window !== "undefined") {
+          window.location.href = "/auth/login";
+        }
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [shouldRedirect]);
 
   const onSubmit = async (data: UpdatePasswordFormData) => {
     setIsLoading(true);
@@ -79,9 +72,7 @@ export function UpdatePasswordForm({ className, ...props }: UpdatePasswordFormPr
       });
 
       // Redirect do logowania po sukcesie
-      setTimeout(() => {
-        window.location.href = "/auth/login";
-      }, 1500);
+      setShouldRedirect(true);
     } catch (err) {
       setIsLoading(false);
 
@@ -122,9 +113,7 @@ export function UpdatePasswordForm({ className, ...props }: UpdatePasswordFormPr
       <Card>
         <CardHeader>
           <CardTitle>Ustaw nowe hasło</CardTitle>
-          <CardDescription>
-            Wprowadź nowe hasło dla swojego konta
-          </CardDescription>
+          <CardDescription>Wprowadź nowe hasło dla swojego konta</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -137,17 +126,10 @@ export function UpdatePasswordForm({ className, ...props }: UpdatePasswordFormPr
                     <FormItem>
                       <Field>
                         <FieldLabel htmlFor={field.name}>Nowe hasło</FieldLabel>
-                        <FieldDescription>
-                          Minimum 8 znaków, co najmniej jedna litera i jedna cyfra
-                        </FieldDescription>
+                        <FieldDescription>Minimum 8 znaków, co najmniej jedna litera i jedna cyfra</FieldDescription>
                         <FieldContent>
                           <FormControl>
-                            <Input
-                              id={field.name}
-                              type="password"
-                              disabled={isLoading}
-                              {...field}
-                            />
+                            <Input id={field.name} type="password" disabled={isLoading} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FieldContent>
@@ -165,12 +147,7 @@ export function UpdatePasswordForm({ className, ...props }: UpdatePasswordFormPr
                         <FieldLabel htmlFor={field.name}>Potwierdź nowe hasło</FieldLabel>
                         <FieldContent>
                           <FormControl>
-                            <Input
-                              id={field.name}
-                              type="password"
-                              disabled={isLoading}
-                              {...field}
-                            />
+                            <Input id={field.name} type="password" disabled={isLoading} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FieldContent>
@@ -192,4 +169,3 @@ export function UpdatePasswordForm({ className, ...props }: UpdatePasswordFormPr
     </div>
   );
 }
-

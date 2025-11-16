@@ -1,5 +1,5 @@
-import { expect, afterEach, beforeEach, vi } from 'vitest';
-import '@testing-library/jest-dom';
+import { expect, afterEach, beforeEach, vi } from "vitest";
+import "@testing-library/jest-dom";
 
 /**
  * Global test setup file
@@ -33,15 +33,15 @@ global.console = {
 /**
  * Disable Sentry for tests
  */
-process.env.SENTRY_ENABLED = 'false';
+process.env.SENTRY_ENABLED = "false";
 
 // ============================================================================
 // Environment Variables
 // ============================================================================
 
-process.env.PUBLIC_SITE_URL = process.env.PUBLIC_SITE_URL || 'http://localhost:3000';
-process.env.SUPABASE_URL = process.env.SUPABASE_URL || 'http://localhost:54321';
-process.env.SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'test-anon-key';
+process.env.PUBLIC_SITE_URL = process.env.PUBLIC_SITE_URL || "http://localhost:3000";
+process.env.SUPABASE_URL = process.env.SUPABASE_URL || "http://localhost:54321";
+process.env.SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || "test-anon-key";
 
 // ============================================================================
 // Test Hooks
@@ -72,12 +72,12 @@ afterEach(() => {
 expect.extend({
   toBeProblemJSON(received: any) {
     const pass =
-      typeof received === 'object' &&
+      typeof received === "object" &&
       received !== null &&
-      'type' in received &&
-      'title' in received &&
-      'status' in received &&
-      typeof received.status === 'number';
+      "type" in received &&
+      "title" in received &&
+      "status" in received &&
+      typeof received.status === "number";
 
     return {
       pass,
@@ -95,19 +95,17 @@ expect.extend({
 expect.extend({
   toBeApiError(received: any) {
     const pass =
-      typeof received === 'object' &&
+      typeof received === "object" &&
       received !== null &&
-      'message' in received &&
-      'code' in received &&
-      'requestId' in received &&
-      typeof received.requestId === 'string';
+      "message" in received &&
+      "code" in received &&
+      "requestId" in received &&
+      typeof received.requestId === "string";
 
     return {
       pass,
       message: () =>
-        pass
-          ? `Expected not to be a valid ApiError`
-          : `Expected a valid ApiError with message, code, and requestId`,
+        pass ? `Expected not to be a valid ApiError` : `Expected a valid ApiError with message, code, and requestId`,
     };
   },
 });
@@ -116,7 +114,7 @@ expect.extend({
 // Type Augmentation (for TypeScript)
 // ============================================================================
 
-declare module 'vitest' {
+declare module "vitest" {
   interface Assertion<T = any> {
     toBeProblemJSON(): T;
     toBeApiError(): T;
@@ -126,4 +124,3 @@ declare module 'vitest' {
     toBeApiError(): any;
   }
 }
-

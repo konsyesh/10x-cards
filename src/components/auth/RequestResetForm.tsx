@@ -8,28 +8,9 @@ import { fetchJson, ApiError } from "@/lib/http/http.fetcher";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Field,
-  FieldContent,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
 const resetPasswordSchema = z.object({
@@ -38,7 +19,7 @@ const resetPasswordSchema = z.object({
 
 type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 
-interface RequestResetFormProps extends React.ComponentProps<"div"> {}
+type RequestResetFormProps = React.ComponentProps<"div">;
 
 export function RequestResetForm({ className, ...props }: RequestResetFormProps) {
   const [isLoading, setIsLoading] = useState(false);
@@ -93,10 +74,7 @@ export function RequestResetForm({ className, ...props }: RequestResetFormProps)
             <FieldGroup>
               <Field>
                 <FieldDescription className="text-center">
-                  <a
-                    href="/auth/login"
-                    className="underline-offset-4 hover:underline text-primary"
-                  >
+                  <a href="/auth/login" className="underline-offset-4 hover:underline text-primary">
                     Powrót do logowania
                   </a>
                 </FieldDescription>
@@ -113,9 +91,7 @@ export function RequestResetForm({ className, ...props }: RequestResetFormProps)
       <Card>
         <CardHeader>
           <CardTitle>Reset hasła</CardTitle>
-          <CardDescription>
-            Wprowadź swój adres e-mail, a wyślemy Ci link do resetowania hasła
-          </CardDescription>
+          <CardDescription>Wprowadź swój adres e-mail, a wyślemy Ci link do resetowania hasła</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -150,10 +126,7 @@ export function RequestResetForm({ className, ...props }: RequestResetFormProps)
                     {isLoading ? "Wysyłanie..." : "Wyślij link resetujący"}
                   </Button>
                   <FieldDescription className="text-center">
-                    <a
-                      href="/auth/login"
-                      className="underline-offset-4 hover:underline text-primary"
-                    >
+                    <a href="/auth/login" className="underline-offset-4 hover:underline text-primary">
                       Powrót do logowania
                     </a>
                   </FieldDescription>
@@ -166,4 +139,3 @@ export function RequestResetForm({ className, ...props }: RequestResetFormProps)
     </div>
   );
 }
-

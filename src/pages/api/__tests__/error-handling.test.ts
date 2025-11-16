@@ -7,7 +7,6 @@
 
 import { describe, it, expect } from "vitest";
 import { isDomainError } from "@/lib/errors/index";
-import { defineDomain } from "@/lib/errors/registry";
 import { fromZod } from "@/lib/errors/map-zod";
 import { flashcardErrors } from "@/services/flashcard/flashcard.errors";
 import { generationErrors } from "@/services/generation/generation.errors";

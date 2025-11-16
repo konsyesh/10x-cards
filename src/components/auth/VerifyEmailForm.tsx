@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -31,6 +31,7 @@ interface VerifyEmailFormProps extends React.ComponentProps<"div"> {
 
 export function VerifyEmailForm({ className, email, onVerified, ...props }: VerifyEmailFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [shouldRedirect, setShouldRedirect] = useState(false);
 
   const form = useForm<VerifyOtpFormData>({
     resolver: zodResolver(verifyOtpSchema),
@@ -39,6 +40,12 @@ export function VerifyEmailForm({ className, email, onVerified, ...props }: Veri
       token: "",
     },
   });
+
+  useEffect(() => {
+    if (shouldRedirect && typeof window !== "undefined") {
+      window.location.href = "/generate";
+    }
+  }, [shouldRedirect]);
 
   const onSubmit = async (data: VerifyOtpFormData) => {
     setIsLoading(true);
@@ -61,7 +68,7 @@ export function VerifyEmailForm({ className, email, onVerified, ...props }: Veri
       if (onVerified) {
         onVerified();
       } else {
-        window.location.href = "/generate";
+        setShouldRedirect(true);
       }
     } catch (err) {
       setIsLoading(false);

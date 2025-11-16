@@ -33,4 +33,3 @@ export const POST: APIRoute = withProblemHandling(async ({ locals }) => {
   // Zwracamy 204 No Content zgodnie ze specyfikacją
   return noContentResponse();
 });
-

@@ -18,9 +18,8 @@ import { z } from "zod";
 import { authErrors } from "@/services/auth/auth.errors";
 import { FlashcardService } from "@/services/flashcard/flashcard.service";
 import { validateBody } from "@/lib/http/http.validate-body";
-import { createdResponse, successResponse } from "@/lib/http/http.responses";
+import { successResponse } from "@/lib/http/http.responses";
 import { withProblemHandling } from "@/lib/errors/http";
-import { fromSupabase } from "@/lib/errors/map-supabase";
 import { flashcardErrors } from "@/services/flashcard/flashcard.errors";
 import type { CreateFlashcardsCommand, CreateFlashcardsResponseDTO } from "@/types";
 

@@ -1,4 +1,5 @@
 <authentication_analysis>
+
 - Przepływy autentykacji (wg PRD i spec):
   - Rejestracja (US-001): formularz → POST /api/auth/register → e‑mail
     weryfikacyjny → /auth/callback (code→sesja) → redirect do /generate.
@@ -10,7 +11,7 @@
   - Wylogowanie (US-004): POST /api/auth/logout → signOut → czyszczenie cookies
     → redirect do /auth/login.
   - Ochrona tras: middleware SSR sprawdza sesję (supabase.auth.getUser()),
-    publiczne: /auth/* i /api/auth/*, reszta chroniona; brak sesji →
+    publiczne: /auth/_ i /api/auth/_, reszta chroniona; brak sesji →
     302 do /auth/login?redirectTo=… (SSR) lub 401 problem+json (API).
   - Sesja i odświeżanie: @supabase/ssr + cookies.getAll/setAll; getUser()
     automatycznie odświeża access token przy ważnym refresh tokenie;
@@ -21,7 +22,7 @@
     obsługuje przekierowania.
   - Middleware (Astro): tworzy SSR klienta Supabase, weryfikuje sesję,
     ustawia locals (supabase, user), dodaje x-request-id.
-  - Astro API/SSR: endpointy /api/auth/* oraz chronione /api/* i strony SSR.
+  - Astro API/SSR: endpointy /api/auth/_ oraz chronione /api/_ i strony SSR.
   - Supabase Auth: signUp, signIn, signOut, resetPassword, updateUser,
     exchange code→session, odświeżanie tokenów.
 
@@ -39,9 +40,10 @@
   - Wylogowanie: POST /api/auth/logout → czyszczenie cookies → 302.
   - Ochrona: GET /generate → middleware getUser() → allow/redirect.
   - API: POST /api/generations → getUser() → 200 lub 401 problem+json.
-</authentication_analysis>
+    </authentication_analysis>
 
 <mermaid_diagram>
+
 ```mermaid
 sequenceDiagram
 autonumber
@@ -148,4 +150,5 @@ else Brak/expired refresh
   end
 end
 ```
+
 </mermaid_diagram>

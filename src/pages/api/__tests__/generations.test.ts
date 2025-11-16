@@ -7,8 +7,6 @@ import {
   verifySuccessResponse,
 } from "@/tests/helpers";
 import { createMockSupabaseClient } from "@/tests/helpers";
-import { authErrors } from "@/services/auth/auth.errors";
-import { generationErrors } from "@/services/generation/generation.errors";
 
 // Mock AIService
 vi.mock("@/services/ai/ai.service", () => ({

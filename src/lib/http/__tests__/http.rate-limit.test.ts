@@ -1,10 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import {
-  createInMemoryRateLimiter,
-  getClientIp,
-  makeKeyIp,
-  makeKeyIpEmail,
-} from "../http.rate-limit";
+import { createInMemoryRateLimiter, getClientIp, makeKeyIp, makeKeyIpEmail } from "../http.rate-limit";
 
 describe("lib/http/http.rate-limit.ts", () => {
   beforeEach(() => {
@@ -162,7 +157,7 @@ describe("lib/http/http.rate-limit.ts", () => {
 
     it("should extract IP from forwarded header", () => {
       const headers = new Headers();
-      headers.set("forwarded", 'for=192.168.1.1;proto=http');
+      headers.set("forwarded", "for=192.168.1.1;proto=http");
 
       const ip = getClientIp(headers);
 
@@ -227,4 +222,3 @@ describe("lib/http/http.rate-limit.ts", () => {
     });
   });
 });
-

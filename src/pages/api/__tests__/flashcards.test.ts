@@ -7,8 +7,6 @@ import {
   verifySuccessResponse,
 } from "@/tests/helpers";
 import { createMockSupabaseClient, createMockQueryBuilder } from "@/tests/helpers";
-import { authErrors } from "@/services/auth/auth.errors";
-import { flashcardErrors } from "@/services/flashcard/flashcard.errors";
 
 describe("pages/api/flashcards.ts", () => {
   let mockSupabase: any;

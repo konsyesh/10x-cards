@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { fetchJson, ApiError } from "../http.fetcher";
 import type { ProblemDetails } from "@/lib/errors/index";
-import { mockFetchJsonSuccess, mockFetchJsonError, mockFetchNetworkError } from "@/tests/helpers";
+import { mockFetchJsonSuccess, mockFetchNetworkError } from "@/tests/helpers";
 
 describe("lib/http/http.fetcher.ts", () => {
   beforeEach(() => {

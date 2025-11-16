@@ -36,6 +36,7 @@ describe("lib/errors/map-zod.ts", () => {
         const error = fromZod(result.error);
 
         expect(error.meta).toBeDefined();
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const flatten = result.error.flatten();
         expect(error.meta?.formErrors || error.meta?.fieldErrors).toBeDefined();
       }
@@ -102,6 +103,7 @@ describe("lib/errors/map-zod.ts", () => {
         const error = fromZodAuth(result.error);
 
         expect(error.meta).toBeDefined();
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const flatten = result.error.flatten();
         expect(error.meta?.formErrors || error.meta?.fieldErrors).toBeDefined();
       }
@@ -136,4 +138,3 @@ describe("lib/errors/map-zod.ts", () => {
     });
   });
 });
-

@@ -17,7 +17,9 @@ const SENTRY_ENABLED = typeof import.meta !== "undefined" && (import.meta as any
 // Inicjalizacja Sentry (opóźniona, tylko w runtime)
 if (SENTRY_ENABLED) {
   try {
-    sentry = require("@sentry/node");
+    import("@sentry/node").then((module) => {
+      sentry = module;
+    });
     sentry.init({
       dsn: typeof import.meta !== "undefined" ? (import.meta as any).env?.SENTRY_DSN : undefined,
       environment: typeof import.meta !== "undefined" ? (import.meta as any).env?.SENTRY_ENV : "production",

@@ -184,7 +184,7 @@ describe("pages/api/auth/reset-password.ts", () => {
       // Pierwsze wywołanie powinno przejść
       const firstResponse = await POST(context as any);
       expect([200, 429]).toContain(firstResponse.status); // Może być 429 jeśli limiter jest już zapełniony z poprzednich testów
-      
+
       // Jeśli nie ma rate limitu, sprawdź czy endpoint działa
       if (firstResponse.status === 200) {
         await verifySuccessResponse(firstResponse, 200);
@@ -315,4 +315,3 @@ describe("pages/api/auth/reset-password.ts", () => {
     });
   });
 });
-

@@ -17,36 +17,36 @@ Error Handling Architecture
 
 ### Błędy walidacji (4xx)
 
-| Kod | Status | Scenariusz |
-|-----|--------|-----------|
-| `ai/invalid-input` | 400 | Pusty prompt, brak schematu |
-| `ai/invalid-config` | 400 | Nieprawidłowa konfiguracja AIService |
-| `ai/bad-request` | 400 | Niepoprawna nazwa modelu, parametry |
+| Kod                 | Status | Scenariusz                           |
+| ------------------- | ------ | ------------------------------------ |
+| `ai/invalid-input`  | 400    | Pusty prompt, brak schematu          |
+| `ai/invalid-config` | 400    | Nieprawidłowa konfiguracja AIService |
+| `ai/bad-request`    | 400    | Niepoprawna nazwa modelu, parametry  |
 
 ### Autoryzacja (4xx)
 
-| Kod | Status | Scenariusz |
-|-----|--------|-----------|
-| `ai/unauthorized` | 401 | Brak/błędne OPENROUTER_API_KEY |
-| `ai/forbidden` | 403 | Brak dostępu do modelu |
+| Kod               | Status | Scenariusz                     |
+| ----------------- | ------ | ------------------------------ |
+| `ai/unauthorized` | 401    | Brak/błędne OPENROUTER_API_KEY |
+| `ai/forbidden`    | 403    | Brak dostępu do modelu         |
 
 ### Rate limiting i availability (5xx)
 
-| Kod | Status | Scenariusz | Retry? |
-|-----|--------|-----------|--------|
-| `ai/rate-limited` | 429 | Limit requestów od OpenRouter | ✅ Yes |
-| `ai/timeout` | 408 | Timeout requestu | ✅ Yes |
-| `ai/provider-error` | 502 | Błąd 5xx od providera | ✅ Yes |
-| `ai/service-unavailable` | 503 | Provider niedostępny | ✅ Yes |
-| `ai/retry-exhausted` | 503 | Wyczerpane próby retry | ❌ No |
+| Kod                      | Status | Scenariusz                    | Retry? |
+| ------------------------ | ------ | ----------------------------- | ------ |
+| `ai/rate-limited`        | 429    | Limit requestów od OpenRouter | ✅ Yes |
+| `ai/timeout`             | 408    | Timeout requestu              | ✅ Yes |
+| `ai/provider-error`      | 502    | Błąd 5xx od providera         | ✅ Yes |
+| `ai/service-unavailable` | 503    | Provider niedostępny          | ✅ Yes |
+| `ai/retry-exhausted`     | 503    | Wyczerpane próby retry        | ❌ No  |
 
 ### Błędy parsowania (4xx)
 
-| Kod | Status | Scenariusz |
-|-----|--------|-----------|
-| `ai/schema-error` | 422 | Brak/błędny schemat Zod |
-| `ai/validation-failed` | 422 | Walidacja Zod wyjścia nie przeszła |
-| `ai/parse-error` | 422 | Błąd parsowania JSON |
+| Kod                    | Status | Scenariusz                         |
+| ---------------------- | ------ | ---------------------------------- |
+| `ai/schema-error`      | 422    | Brak/błędny schemat Zod            |
+| `ai/validation-failed` | 422    | Walidacja Zod wyjścia nie przeszła |
+| `ai/parse-error`       | 422    | Błąd parsowania JSON               |
 
 ## Obsługa w API endpoint
 
@@ -64,16 +64,16 @@ export async function POST(req: Request) {
     if (isDomainError(err)) {
       // Mapowanie na RFC 7807 ProblemDetails
       const problem = aiErrors.toProblem(err, req.url);
-      return new Response(JSON.stringify(problem), { 
+      return new Response(JSON.stringify(problem), {
         status: err.status,
-        headers: { "Content-Type": "application/problem+json" }
+        headers: { "Content-Type": "application/problem+json" },
       });
     }
 
     // Unexpected error
     return new Response(
-      JSON.stringify({ 
-        message: "Unexpected server error" 
+      JSON.stringify({
+        message: "Unexpected server error",
       }),
       { status: 500 }
     );
@@ -94,13 +94,10 @@ try {
     // 1. Zaloguj metrykę
     // 2. Zwróć 429 + retry-after header
     // 3. Poinformuj użytkownika (queue, retry later)
-    return new Response(
-      JSON.stringify({ message: "Too many requests, try again later" }),
-      { 
-        status: 429,
-        headers: { "Retry-After": "60" }
-      }
-    );
+    return new Response(JSON.stringify({ message: "Too many requests, try again later" }), {
+      status: 429,
+      headers: { "Retry-After": "60" },
+    });
   }
 }
 ```
@@ -117,9 +114,9 @@ try {
     // 2. Zasugeruj shorter input dla użytkownika
     // 3. Opcjonalnie: retry z dłuższym timeout
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         message: "Request timeout - try with shorter text",
-        code: "ai/timeout"
+        code: "ai/timeout",
       }),
       { status: 408 }
     );
@@ -139,10 +136,7 @@ try {
     // 2. Zwróć 500 (nie ujawniaj API key issue klientowi)
     // 3. Wyślij alert do administratora
     logger.error("CRITICAL: Missing or invalid OPENROUTER_API_KEY");
-    return new Response(
-      JSON.stringify({ message: "Service configuration error" }),
-      { status: 500 }
-    );
+    return new Response(JSON.stringify({ message: "Service configuration error" }), { status: 500 });
   }
 }
 ```
@@ -162,7 +156,7 @@ try {
       JSON.stringify({
         message: "Output validation failed",
         errors: err.meta?.errors,
-        code: "ai/validation-failed"
+        code: "ai/validation-failed",
       }),
       { status: 422 }
     );
@@ -183,9 +177,9 @@ try {
     // 3. Jeśli mimo retry - zwróć 502
     // 4. Zasugeruj retry w UI
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         message: "AI service error - try again",
-        code: "ai/provider-error"
+        code: "ai/provider-error",
       }),
       { status: 502 }
     );
@@ -206,9 +200,9 @@ try {
     // 3. Zasugeruj retry w UI
     // 4. Monitoruj availability
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         message: "AI service temporarily unavailable",
-        code: "ai/service-unavailable"
+        code: "ai/service-unavailable",
       }),
       { status: 503, headers: { "Retry-After": "120" } }
     );
@@ -223,18 +217,18 @@ AIService automatycznie retry'je dla błędów idempotentnych:
 ```typescript
 // Retryable errors
 const RETRYABLE = [
-  "ai/rate-limited",    // 429
-  "ai/timeout",         // 408
-  "ai/provider-error",  // 502
+  "ai/rate-limited", // 429
+  "ai/timeout", // 408
+  "ai/provider-error", // 502
   "ai/service-unavailable", // 503
 ];
 
 // Non-retryable (throw immediately)
 const NON_RETRYABLE = [
-  "ai/unauthorized",    // 401 - nie pomaga retry
-  "ai/forbidden",       // 403 - nie pomaga retry
-  "ai/invalid-input",   // 400 - input problem
-  "ai/invalid-config",  // 400 - config problem
+  "ai/unauthorized", // 401 - nie pomaga retry
+  "ai/forbidden", // 403 - nie pomaga retry
+  "ai/invalid-input", // 400 - input problem
+  "ai/invalid-config", // 400 - config problem
   "ai/validation-failed", // 422 - schema problem
 ];
 ```
@@ -276,7 +270,7 @@ const { mutate, isPending, error } = useMutation({
         const titleKey = problem.title; // np. "errors.ai.rate_limited"
       }
     }
-  }
+  },
 });
 ```
 
@@ -311,7 +305,7 @@ logger.error("AIService.generateObject failed", {
   code: err.code,
   status: err.status,
   model: configuration.model, // bez treści promptu!
-  duration: Date.now() - startTime
+  duration: Date.now() - startTime,
 });
 ```
 
@@ -322,12 +316,14 @@ logger.error("AIService.generateObject failed", {
 return Response(err.message);
 
 // ✅ Dobre
-return Response(JSON.stringify({
-  title: err.title,        // i18n key
-  status: err.status,
-  code: err.code,
-  // detail: err.message  // Opuszczamy techniczne szczegóły
-}));
+return Response(
+  JSON.stringify({
+    title: err.title, // i18n key
+    status: err.status,
+    code: err.code,
+    // detail: err.message  // Opuszczamy techniczne szczegóły
+  })
+);
 ```
 
 ### 4. Obsługuj Retry-After
@@ -347,7 +343,7 @@ if (err.code === "ai/rate-limited") {
 ```typescript
 logger.error("CRITICAL: ai/unauthorized", {
   timestamp: new Date(),
-  action: "SEND_ALERT_TO_OPS"
+  action: "SEND_ALERT_TO_OPS",
 });
 
 // W produkcji - alert do pagerduty, slack, itp.
@@ -386,4 +382,3 @@ it("powinien obsługiwać rate limit", async () => {
 - Error Handling Architecture: `src/lib/errors/ERROR_HANDLING.md`
 - RFC 7807: https://tools.ietf.org/html/rfc7807
 - HTTP Status Codes: https://httpwg.org/specs/rfc9110.html#status.codes
-

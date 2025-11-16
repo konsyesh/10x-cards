@@ -33,7 +33,6 @@ const loginSchema = z.object({
 // 5 prób na minutę per IP+email
 const loginLimiter = createInMemoryRateLimiter({ windowMs: 60_000, max: 5 });
 
-
 export const POST: APIRoute = withProblemHandling(async ({ request, locals }) => {
   // Walidacja body
   const { email, password } = await validateAuthBody(request, loginSchema);

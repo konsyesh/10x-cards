@@ -17,7 +17,9 @@ const SENTRY_ENABLED = typeof import.meta !== "undefined" && (import.meta as any
 // Inicjalizacja Sentry (opóźniona, tylko w runtime)
 if (SENTRY_ENABLED) {
   try {
-    sentry = require("@sentry/node");
+    import("@sentry/node").then((module) => {
+      sentry = module;
+    });
     sentry.init({
       dsn: typeof import.meta !== "undefined" ? (import.meta as any).env?.SENTRY_DSN : undefined,
       environment: typeof import.meta !== "undefined" ? (import.meta as any).env?.SENTRY_ENV : "production",
@@ -41,11 +43,12 @@ const SystemErrors = defineDomain("system", {
  */
 export function toProblem(e: DomainError, instance?: string): ProblemDetails {
   const [domain] = e.code.split("/");
-  // Szukamy domeny w definicjach - dla teraz używamy fallback
-  const base =
+  // Bazowy URI typu problemu: preferuj env, ale fallback gdy brak/wartość pusta
+  const configuredBase =
     typeof import.meta !== "undefined" && (import.meta as any).env
       ? (import.meta as any).env.PROBLEM_URI_TYPE
-      : "https://docs.app.dev/problems";
+      : undefined;
+  const base = configuredBase || "https://docs.app.dev/problems";
 
   return {
     type: `${base}/${domain}/${e.code.split("/")[1]}`,
@@ -63,7 +66,7 @@ export function toProblem(e: DomainError, instance?: string): ProblemDetails {
  */
 export function jsonProblem(problem: ProblemDetails, init?: ResponseInit): Response {
   return new Response(JSON.stringify(problem), {
-    ...init,
+    status: init?.status ?? problem.status,
     headers: {
       "content-type": "application/problem+json",
       ...(init?.headers ?? {}),
@@ -111,10 +114,22 @@ export function withProblemHandling(handler: APIRoute): APIRoute {
         });
       }
 
-      // Konwersja na problem+json
-      const problem = toProblem(domainErr, new URL(ctx.url).pathname);
+      // Konwersja na problem+json (bezpieczne wyznaczenie ścieżki)
+      let instancePath: string | undefined = undefined;
+      try {
+        const urlValue: any = (ctx as any).url ?? (ctx as any).request?.url;
+        if (urlValue) {
+          if (typeof urlValue === "string") {
+            instancePath = new URL(urlValue, "http://localhost").pathname;
+          } else if (urlValue && typeof urlValue === "object" && typeof urlValue.pathname === "string") {
+            instancePath = urlValue.pathname;
+          }
+        }
+      } catch {
+        // ignore, leave instancePath undefined
+      }
+      const problem = toProblem(domainErr, instancePath);
       return jsonProblem(problem, {
-        status: problem.status,
         headers: { "x-request-id": reqId },
       });
     }

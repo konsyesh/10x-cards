@@ -5,24 +5,31 @@
  * UWAGA: Te testy wymagają OPENROUTER_API_KEY w .env
  */
 
-import { describe, it, expect, beforeEach, skip } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { z } from "zod";
 import { AIService } from "./ai.service";
 import { isDomainError } from "@/lib/errors";
 
-// Skip integration tests jeśli brak API key
-const skipIfNoApiKey = process.env.OPENROUTER_API_KEY ? it : skip;
+// Helper: uruchamia test tylko jeśli dostępny jest API key
+const itIfApiKey: typeof it = ((name: any, fn: any, timeout?: any) => {
+  const runner = process.env.OPENROUTER_API_KEY ? it : it.skip;
+  // @ts-expect-error - dopasowanie sygnatury w runtime
+  return runner(name, fn, timeout);
+}) as unknown as typeof it;
 
 describe("AIService - Integration Tests", () => {
   let aiService: AIService;
 
   beforeEach(() => {
-    process.env.OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || "test_key_" + Date.now();
-    aiService = new AIService();
+    aiService = new AIService({
+      // W testach nie-e2e nie chcemy prawdziwych wywołań sieciowych,
+      // ale konstruktor wymaga klucza. Wstrzykujemy więc testowy lub realny z env.
+      apiKey: process.env.OPENROUTER_API_KEY || `test_key_${Date.now()}`,
+    });
   });
 
   describe("Real API calls (requires OPENROUTER_API_KEY)", () => {
-    skipIfNoApiKey("powinien generować fiszki", async () => {
+    itIfApiKey("powinien generować fiszki", async () => {
       const schema = z.object({
         flashcards: z
           .array(
@@ -52,7 +59,7 @@ describe("AIService - Integration Tests", () => {
       expect(result.flashcards[0]).toHaveProperty("back");
     });
 
-    skipIfNoApiKey("powinien obsługiwać timeout", async () => {
+    itIfApiKey("powinien obsługiwać timeout", async () => {
       aiService.setTimeout(100); // Bardzo krótki timeout
 
       try {
@@ -70,7 +77,7 @@ describe("AIService - Integration Tests", () => {
       }
     });
 
-    skipIfNoApiKey("powinien retry'ować rate limit", async () => {
+    itIfApiKey("powinien retry'ować rate limit", async () => {
       aiService.setRetryPolicy({
         maxRetries: 2,
         baseDelayMs: 100,
@@ -91,7 +98,7 @@ describe("AIService - Integration Tests", () => {
       }
     });
 
-    skipIfNoApiKey("healthcheck powinien zwrócić true dla valid config", async () => {
+    itIfApiKey("healthcheck powinien zwrócić true dla valid config", async () => {
       const health = await aiService.isHealthy();
       expect(typeof health).toBe("boolean");
     });
@@ -195,7 +202,10 @@ describe("AIService - Integration Tests", () => {
         },
       };
 
-      const service = new AIService({ logger });
+      const service = new AIService({
+        logger,
+        apiKey: process.env.OPENROUTER_API_KEY || `test_key_${Date.now()}`,
+      });
       expect(service).toBeInstanceOf(AIService);
     });
   });
@@ -203,7 +213,7 @@ describe("AIService - Integration Tests", () => {
   describe("Performance", () => {
     it("konstruktor powinien się zainicjalizować szybko", () => {
       const start = performance.now();
-      new AIService();
+      new AIService({ apiKey: process.env.OPENROUTER_API_KEY || `test_key_${Date.now()}` });
       const end = performance.now();
 
       expect(end - start).toBeLessThan(100);
@@ -213,7 +223,7 @@ describe("AIService - Integration Tests", () => {
       const start = performance.now();
 
       aiService
-        .setModel("gpt-4")
+        .setModel("gpt-4o-mini")
         .setParameters({ temperature: 0.5 })
         .setSystemPrompt("Test")
         .setUserPrompt("Test")

@@ -42,10 +42,13 @@ export function defineDomain<D extends string, K extends string>(domain: D, defs
   // Mapowanie DomainError na RFC 7807 ProblemDetails
   const toProblem = (e: DomainError, instance?: string): ProblemDetails => {
     const [d, c] = e.code.split("/");
-    const base =
-      typeof import.meta !== "undefined" && (import.meta as any).env
-        ? (import.meta as any).env.PROBLEM_URI_TYPE
-        : "https://docs.app.dev/problems";
+    let base = "https://docs.app.dev/problems";
+    if (typeof import.meta !== "undefined" && (import.meta as any).env) {
+      const envBase = (import.meta as any).env.PROBLEM_URI_TYPE;
+      if (envBase && typeof envBase === "string") {
+        base = envBase;
+      }
+    }
     return {
       type: `${base}/${d}/${c}`,
       title: e.title,

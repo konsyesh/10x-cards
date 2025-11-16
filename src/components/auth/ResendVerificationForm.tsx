@@ -62,7 +62,13 @@ export function ResendVerificationForm() {
                       <FieldLabel htmlFor={field.name}>E‑mail</FieldLabel>
                       <FieldContent>
                         <FormControl>
-                          <Input id={field.name} type="email" placeholder="twoj@email.pl" disabled={isLoading} {...field} />
+                          <Input
+                            id={field.name}
+                            type="email"
+                            placeholder="twoj@email.pl"
+                            disabled={isLoading}
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FieldContent>
@@ -85,4 +91,3 @@ export function ResendVerificationForm() {
     </Card>
   );
 }
-

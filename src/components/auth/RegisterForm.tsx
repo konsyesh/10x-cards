@@ -1,16 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { fetchJson, ApiError } from "@/lib/http/http.fetcher";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { VerifyEmailForm } from "./VerifyEmailForm";
@@ -22,6 +21,7 @@ export function RegisterForm({ className, ...props }: RegisterFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState<string>("");
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
 
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(RegisterFormSchema),
@@ -32,6 +32,12 @@ export function RegisterForm({ className, ...props }: RegisterFormProps) {
       acceptTerms: false,
     },
   });
+
+  useEffect(() => {
+    if (redirectUrl) {
+      window.location.href = redirectUrl;
+    }
+  }, [redirectUrl]);
 
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
@@ -51,7 +57,7 @@ export function RegisterForm({ className, ...props }: RegisterFormProps) {
         toast.success("Rejestracja udana", {
           description: "Przekierowywanie...",
         });
-        window.location.href = "/generate";
+        setRedirectUrl("/generate");
       } else {
         // Wymagane potwierdzenie e-mail - reset isLoading i pokaż formularz weryfikacji
         setIsLoading(false);
@@ -190,10 +196,10 @@ export function RegisterForm({ className, ...props }: RegisterFormProps) {
                           <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isLoading} />
                         </FormControl>
                         <FieldContent>
-                          <FieldLabel htmlFor={field.name} className="cursor-pointer">
+                          <FormLabel className="cursor-pointer">
                             Akceptuję{" "}
-                            <a
-                              href="#"
+                            <button
+                              type="button"
                               className="underline-offset-4 hover:underline text-primary"
                               onClick={(e) => {
                                 e.preventDefault();
@@ -201,8 +207,8 @@ export function RegisterForm({ className, ...props }: RegisterFormProps) {
                               }}
                             >
                               regulamin i politykę prywatności
-                            </a>
-                          </FieldLabel>
+                            </button>
+                          </FormLabel>
                           <FormMessage />
                         </FieldContent>
                       </Field>

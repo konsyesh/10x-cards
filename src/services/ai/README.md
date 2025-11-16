@@ -92,9 +92,7 @@ type FlashcardType = z.infer<typeof FlashcardSchema>;
 ### Generowanie z domyślnym schematem
 
 ```typescript
-const { flashcards } = await aiService
-  .setSchema(FlashcardSchema)
-  .generateObject<FlashcardType>();
+const { flashcards } = await aiService.setSchema(FlashcardSchema).generateObject<FlashcardType>();
 ```
 
 ### Generowanie z override'ami
@@ -146,10 +144,7 @@ try {
   }
 
   // Unexpected error
-  return new Response(
-    JSON.stringify({ message: "Internal server error" }),
-    { status: 500 }
-  );
+  return new Response(JSON.stringify({ message: "Internal server error" }), { status: 500 });
 }
 ```
 
@@ -187,6 +182,7 @@ console.log(isHealthy); // true | false
 ### Best Practices
 
 1. **API Key** – Wyłącznie strona serwera, nigdy klient
+
    ```typescript
    // ✅ Server-side only
    const service = new AIService();
@@ -196,18 +192,21 @@ console.log(isHealthy); // true | false
    ```
 
 2. **Maskowanie PII** – Automatyczne dla logów
+
    ```typescript
    // Email i długie teksty są maskowane w logach
    logger.debug("...", { email: "user@example.com" }); // → [EMAIL]
    ```
 
 3. **Timeout** – Unika wiszących połączeń
+
    ```typescript
    // Default 15s, max 60s
    service.setTimeout(20000);
    ```
 
 4. **Walidacja wejścia/wyjścia** – Dwie bariery Zod
+
    ```typescript
    // 1. System prompt: 1-5000 znaków
    // 2. User prompt: 1-20000 znaków
@@ -237,12 +236,8 @@ const schema = z.object({
 const aiService = new AIService()
   .setModel("openai/gpt-4o-mini")
   .setParameters({ temperature: 0.2, maxTokens: 1500 })
-  .setSystemPrompt(
-    "Jesteś asystentem do generowania fiszek. Odpowiadaj WYŁĄCZNIE w JSON."
-  )
-  .setUserPrompt(
-    `Stwórz do 8 fiszek z poniższego tekstu:\n\n${sourceText}`
-  )
+  .setSystemPrompt("Jesteś asystentem do generowania fiszek. Odpowiadaj WYŁĄCZNIE w JSON.")
+  .setUserPrompt(`Stwórz do 8 fiszek z poniższego tekstu:\n\n${sourceText}`)
   .setSchema(schema);
 
 const { flashcards } = await aiService.generateObject<{
@@ -336,9 +331,7 @@ export class GenerationService {
   }
 
   async generateFlashcards(sourceText: string) {
-    this.aiService.setUserPrompt(
-      `Stwórz fiszki z tekstu:\n\n${sourceText}`
-    );
+    this.aiService.setUserPrompt(`Stwórz fiszki z tekstu:\n\n${sourceText}`);
 
     return await this.aiService.generateObject<FlashcardType>();
   }
@@ -362,4 +355,3 @@ export class GenerationService {
 - OpenRouter: https://openrouter.ai
 - Zod: https://zod.dev
 - Error Handling: `src/lib/errors/ERROR_HANDLING.md`
-

@@ -7,6 +7,7 @@ Kompletna implementacja serwisu AIService dla generowania ustrukturyzowanych odp
 ## Co zostało zaimplementowane
 
 ### 1. **AIService klasa** (`ai.service.ts`)
+
 - ✅ Konstruktor z walidacją Zod
 - ✅ Post-construction settery (fluent API)
 - ✅ `generateObject<T>()` - główna metoda
@@ -18,24 +19,28 @@ Kompletna implementacja serwisu AIService dla generowania ustrukturyzowanych odp
 - ✅ 14 kodów błędów domenowych
 
 ### 2. **Error handling** (`ai.errors.ts`, `map-ai-sdk.ts`)
+
 - ✅ `aiErrors` - definicje błędów
 - ✅ Mapowanie AI SDK errors na domenowe
 - ✅ RFC 7807 ProblemDetails integration
 - ✅ userMessage dla błędów (friendly messages)
 
 ### 3. **Konfiguracja** (`ai.service.config.ts`)
+
 - ✅ 6 predefiniowanych konfiguracji (dev, prod, test, high-perf, creative, reliable)
 - ✅ `AIServicePresets` - szybkie factory dla use-case'ów
 - ✅ `createAIService()` - auto-detect environment
 - ✅ `loadLogger()` - załaduj logger z env
 
 ### 4. **Testy**
+
 - ✅ Testy jednostkowe (`ai.service.test.ts`) - 25+ testów
 - ✅ Testy integracyjne (`ai.service.integration.test.ts`)
 - ✅ Walidacja schematu Zod
 - ✅ Obsługa błędów i retry
 
 ### 5. **Dokumentacja**
+
 - ✅ `README.md` - comprehensive guide
 - ✅ `ERROR_HANDLING_AI.md` - error scenarios
 - ✅ `ai.service.example.ts` - 10 examples
@@ -43,6 +48,7 @@ Kompletna implementacja serwisu AIService dla generowania ustrukturyzowanych odp
 - ✅ Type safety z TypeScript
 
 ### 6. **Public API** (`index.ts`)
+
 - ✅ Eksport wszystkich kluczowych typów i funkcji
 - ✅ Re-export mapowań błędów
 
@@ -140,21 +146,21 @@ const analysisService = AIServicePresets.analysis(loadLogger());
 
 ## Kody błędów
 
-| Kod | Status | Retry? | Scenariusz |
-|-----|--------|--------|-----------|
-| `ai/invalid-input` | 400 | ❌ | Pusty prompt, brak schematu |
-| `ai/invalid-config` | 400 | ❌ | Nieprawidłowa konfiguracja |
-| `ai/unauthorized` | 401 | ❌ | Brak/błędne API key |
-| `ai/forbidden` | 403 | ❌ | Brak dostępu do modelu |
-| `ai/bad-request` | 400 | ❌ | Niepoprawna nazwa modelu |
-| `ai/rate-limited` | 429 | ✅ | Rate limit od providera |
-| `ai/timeout` | 408 | ✅ | Timeout requestu |
-| `ai/provider-error` | 502 | ✅ | Błąd 5xx od providera |
-| `ai/service-unavailable` | 503 | ✅ | Provider niedostępny |
-| `ai/schema-error` | 422 | ❌ | Brak/błędny schemat |
-| `ai/validation-failed` | 422 | ❌ | Walidacja Zod nie przeszła |
-| `ai/parse-error` | 422 | ❌ | Błąd parsowania JSON |
-| `ai/retry-exhausted` | 503 | ❌ | Wyczerpane próby retry |
+| Kod                      | Status | Retry? | Scenariusz                  |
+| ------------------------ | ------ | ------ | --------------------------- |
+| `ai/invalid-input`       | 400    | ❌     | Pusty prompt, brak schematu |
+| `ai/invalid-config`      | 400    | ❌     | Nieprawidłowa konfiguracja  |
+| `ai/unauthorized`        | 401    | ❌     | Brak/błędne API key         |
+| `ai/forbidden`           | 403    | ❌     | Brak dostępu do modelu      |
+| `ai/bad-request`         | 400    | ❌     | Niepoprawna nazwa modelu    |
+| `ai/rate-limited`        | 429    | ✅     | Rate limit od providera     |
+| `ai/timeout`             | 408    | ✅     | Timeout requestu            |
+| `ai/provider-error`      | 502    | ✅     | Błąd 5xx od providera       |
+| `ai/service-unavailable` | 503    | ✅     | Provider niedostępny        |
+| `ai/schema-error`        | 422    | ❌     | Brak/błędny schemat         |
+| `ai/validation-failed`   | 422    | ❌     | Walidacja Zod nie przeszła  |
+| `ai/parse-error`         | 422    | ❌     | Błąd parsowania JSON        |
+| `ai/retry-exhausted`     | 503    | ❌     | Wyczerpane próby retry      |
 
 ## Integracja w API endpoint
 
@@ -164,9 +170,7 @@ import { AIService } from "@/services/ai";
 import { isDomainError } from "@/lib/errors";
 
 export async function POST(req: Request) {
-  const aiService = new AIService()
-    .setModel("openai/gpt-4o-mini")
-    .setSchema(FlashcardSchema);
+  const aiService = new AIService().setModel("openai/gpt-4o-mini").setSchema(FlashcardSchema);
 
   try {
     const result = await aiService.generateObject();
@@ -176,11 +180,11 @@ export async function POST(req: Request) {
       const problem = aiErrors.toProblem(err, req.url);
       return new Response(JSON.stringify(problem), {
         status: err.status,
-        headers: { "Content-Type": "application/problem+json" }
+        headers: { "Content-Type": "application/problem+json" },
       });
     }
     return new Response(JSON.stringify({ message: "Server error" }), {
-      status: 500
+      status: 500,
     });
   }
 }
@@ -229,11 +233,13 @@ npm run lint:fix src/services/ai
 ## Integracja z generowaniem fiszek (next step)
 
 1. Importuj w `GenerationService`:
+
 ```typescript
 import { AIService } from "@/services/ai";
 ```
 
 2. Utwórz instancję:
+
 ```typescript
 const aiService = new AIService()
   .setModel("openai/gpt-4o-mini")
@@ -242,14 +248,13 @@ const aiService = new AIService()
 ```
 
 3. Generuj:
+
 ```typescript
-const flashcards = await aiService
-  .setUserPrompt("...")
-  .setSchema(FlashcardSchema)
-  .generateObject();
+const flashcards = await aiService.setUserPrompt("...").setSchema(FlashcardSchema).generateObject();
 ```
 
 4. Obsługuj błędy:
+
 ```typescript
 catch (err) {
   if (isDomainError(err)) {
@@ -266,24 +271,24 @@ catch (err) {
 logger.info("Flashcard generation started", {
   sourceTextLength: sourceText.length,
   model: "openai/gpt-4o-mini",
-  timestamp: Date.now()
+  timestamp: Date.now(),
 });
 
 logger.info("Flashcard generation completed", {
   flashcardCount: flashcards.length,
   duration: Date.now() - startTime,
-  model: "openai/gpt-4o-mini"
+  model: "openai/gpt-4o-mini",
 });
 
 logger.warn("Rate limit hit", {
   retryAfter: 60,
-  nextRetry: Date.now() + 60000
+  nextRetry: Date.now() + 60000,
 });
 
 logger.error("Generation failed", {
   code: err.code,
   status: err.status,
-  attempt: retryCount
+  attempt: retryCount,
 });
 ```
 
@@ -334,4 +339,3 @@ Prompty są maskowane w logach. Możesz łatwo zmienić w `maskSensitiveData()`.
 **Ostatnia aktualizacja:** 2024-11-09
 **Status:** ✅ Production-ready
 **Pokrycie testów:** 85%+
-

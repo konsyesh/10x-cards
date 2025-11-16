@@ -16,14 +16,14 @@ interface SupabaseAuthError {
 
 /**
  * Mapuj błąd Supabase Auth na odpowiedni DomainError
- * 
+ *
  * Mapowanie zgodne z specyfikacją:
  * - invalid_credentials → auth/invalid-credentials (401)
  * - user_exists/user_already_registered → auth/user-exists (409)
  * - email_not_confirmed → auth/email-not-confirmed (403)
  * - rate_limit → auth/rate-limited (429)
  * - provider errors → auth/provider-error (502)
- * 
+ *
  * @param err Błąd z Supabase Auth API
  * @returns DomainError z odpowiednim kodem i statusem
  */
@@ -104,4 +104,3 @@ export function fromSupabaseAuth(err: SupabaseAuthError) {
     cause: err,
   });
 }
-

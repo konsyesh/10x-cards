@@ -12,7 +12,7 @@ interface LogoutButtonProps extends React.ComponentProps<typeof Button> {
 
 /**
  * Komponent przycisku wylogowania
- * 
+ *
  * Wywołuje POST /api/auth/logout i przekierowuje do /auth/login
  * Zgodny z US-004 i auth-spec-codex.md
  */
@@ -66,4 +66,3 @@ export function LogoutButton({ className, onLogoutSuccess, ...props }: LogoutBut
     </Button>
   );
 }
-

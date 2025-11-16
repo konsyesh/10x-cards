@@ -189,7 +189,7 @@ enabled = true
 host = "smtp.zoho.eu"
 port = 587
 user = "noreply@caindrop.com"
-pass = "MojePasslo-zoho-2024"
+pass = "env(SUPABASE_AUTH_EMAIL_SMTP_PASS)"
 admin_email = "noreply@caindrop.com"
 sender_name = "NoReply"
 

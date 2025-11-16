@@ -7,7 +7,6 @@ import type {
 } from "../../types";
 import type { SupabaseClient } from "../../db/supabase.client";
 import { generationErrors } from "./generation.errors";
-import { fromSupabase } from "@/lib/errors/map-supabase";
 import { AIService } from "../ai/ai.service";
 import { z } from "zod";
 

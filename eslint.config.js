@@ -1,6 +1,6 @@
 import { includeIgnoreFile } from "@eslint/compat";
 import eslint from "@eslint/js";
-import eslintPluginPrettier from "eslint-plugin-prettier/recommended";
+import configPrettier from "eslint-config-prettier";
 import eslintPluginAstro from "eslint-plugin-astro";
 import jsxA11y from "eslint-plugin-jsx-a11y";
 import pluginReact from "eslint-plugin-react";
@@ -21,6 +21,7 @@ const baseConfig = tseslint.config({
     "no-console": "warn",
     "no-unused-vars": "off",
     "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+    "@typescript-eslint/no-explicit-any": "off",
   },
 });
 
@@ -57,11 +58,18 @@ const reactConfig = tseslint.config({
   },
 });
 
+// Brak reguł Prettiera w ESLint dla .astro –
+// formatowanie .astro wykonuje Prettier CLI (nie przez rule "prettier/prettier").
+
 export default tseslint.config(
   includeIgnoreFile(gitignorePath),
+  {
+    ignores: ["**/database.types.ts"],
+  },
   baseConfig,
   jsxA11yConfig,
   reactConfig,
   eslintPluginAstro.configs["flat/recommended"],
-  eslintPluginPrettier
+  // Wyłącz reguły kolidujące z Prettier – bez uruchamiania samego Prettiera w ESLint
+  configPrettier
 );

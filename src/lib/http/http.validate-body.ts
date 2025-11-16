@@ -41,7 +41,9 @@ export async function validateBody<T>(request: Request, schema: ZodSchema<T>): P
           path: [],
         },
       ],
-      addIssue: () => {},
+      addIssue: () => {
+        // Empty function for Zod error mock
+      },
       flatten: () => ({
         formErrors: ["Invalid JSON"],
         fieldErrors: {},
@@ -65,7 +67,9 @@ export async function validateAuthBody<T>(request: Request, schema: ZodSchema<T>
   } catch {
     throw fromZodAuth({
       issues: [{ code: "custom", message: "Invalid JSON", path: [] }],
-      addIssue: () => {},
+      addIssue: () => {
+        // Empty function for Zod error mock
+      },
       flatten: () => ({ formErrors: ["Invalid JSON"], fieldErrors: {} }),
     } as any);
   }

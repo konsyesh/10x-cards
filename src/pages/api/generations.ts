@@ -1,17 +1,28 @@
+/**
+ * POST /api/generations
+ *
+ * Tworzy nową sesję generowania flashcard'ów z tekstu źródłowego
+ * Inicjuje przetwarzanie tekstu za pośrednictwem AI i zwraca wygenerowanych kandydatów
+ *
+ * Autoryzacja: Wymaga JWT (będzie zweryfikowany w middleware)
+ * Rate limit: 5 żądań na minutę na użytkownika
+ *
+ * @endpoint POST /api/generations
+ * @body CreateGenerationCommand { source_text, model }
+ * @returns GenerationResponseDTO (201 Created)
+ */
+
 import type { APIRoute } from "astro";
 import { z } from "zod";
-import { DEFAULT_USER_ID } from "../../db/supabase.client";
-import { GenerationService } from "../../lib/services/generation.service";
-import { validateBody } from "../../lib/http/http.validate-body";
-import { successResponse } from "../../lib/http/http.responses";
-import {
-  rateLimitExceeded,
-  serviceUnavailable,
-  llmUnavailable,
-  llmTimeout,
-  internalError,
-} from "../../lib/http/http.errors";
-import type { CreateGenerationCommand } from "@/types";
+import { DEFAULT_USER_ID } from "@/db/supabase.client";
+import { GenerationService } from "@/services/generation/generation.service";
+import { validateBody } from "@/lib/http/http.validate-body";
+import { successResponse } from "@/lib/http/http.responses";
+import { withProblemHandling } from "@/lib/errors/http";
+import { generationErrors } from "@/services/generation/generation.errors";
+
+import { createLogger } from "@/lib/logger";
+import { requestId as ensureRequestId } from "@/lib/errors/http";
 
 export const prerender = false;
 
@@ -22,9 +33,6 @@ const SUPPORTED_MODELS = ["gpt-4o-mini"] as const;
 
 /**
  * Zod schema do walidacji komendy tworzenia sesji generowania
- * Sprawdza:
- * - source_text: 1000-50000 znaków, wymagane, string
- * - model: z whitelist obsługiwanych modeli
  */
 const createGenerationCommandSchema = z.object({
   source_text: z
@@ -34,13 +42,28 @@ const createGenerationCommandSchema = z.object({
     .describe("Tekst źródłowy do analizy (1000-50000 znaków)"),
 
   model: z
-    .enum(SUPPORTED_MODELS, {
-      errorMap: () => ({
-        message: `Obsługiwany model to: ${SUPPORTED_MODELS.join(", ")}`,
-      }),
-    })
-    .default("gpt-4o-mini")
+    .enum(SUPPORTED_MODELS)
+    .optional()
+    .transform((m) => m ?? ("gpt-4o-mini" as const))
     .describe("Model LLM do użycia w generowaniu"),
+
+  // Opcjonalne: Parametry konfiguracji AI (na przyszłość)
+  aiParameters: z
+    .object({
+      temperature: z.number().min(0).max(2).optional(),
+      maxTokens: z.number().int().positive().max(4000).optional(),
+      topP: z.number().min(0).max(1).optional(),
+      retryPolicy: z
+        .object({
+          maxRetries: z.number().int().min(0).max(5).optional(),
+          baseDelayMs: z.number().int().min(10).max(10000).optional(),
+          maxDelayMs: z.number().int().min(50).max(60000).optional(),
+          jitter: z.boolean().optional(),
+        })
+        .optional(),
+    })
+    .optional()
+    .describe("Opcjonalne parametry konfiguracji AI"),
 });
 
 /**
@@ -58,17 +81,11 @@ const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 60 sekund
 
 /**
  * Sprawdza rate limit dla użytkownika
- * Zwraca true jeśli użytkownik może wykonać żądanie
- * Zwraca false jeśli limit został przekroczony
- *
- * @param userId - ID użytkownika
- * @returns boolean - Czy żądanie jest dozwolone
  */
 function checkRateLimit(userId: string): boolean {
   const now = new Date();
   const userLimit = rateLimitMap.get(userId);
 
-  // Jeśli nie ma limitu lub wygasł - reset
   if (!userLimit || now > userLimit.resetAt) {
     rateLimitMap.set(userId, {
       count: 1,
@@ -77,100 +94,52 @@ function checkRateLimit(userId: string): boolean {
     return true;
   }
 
-  // Sprawdzenie czy nie przekroczono limitu
   if (userLimit.count >= RATE_LIMIT_REQUESTS) {
     return false;
   }
 
-  // Inkrementacja licznika
   userLimit.count += 1;
   return true;
 }
 
-/**
- * POST /api/generations
- *
- * Tworzy nową sesję generowania flashcard'ów z tekstu źródłowego
- * Inicjuje przetwarzanie tekstu za pośrednictwem AI i zwraca wygenerowanych kandydatów
- *
- * Autoryzacja: Wymaga JWT (będzie zweryfikowany w middleware)
- * Rate limit: 5 żądań na minutę na użytkownika
- *
- * @endpoint POST /api/generations
- * @body CreateGenerationCommand { source_text, model }
- * @returns GenerationResponseDTO (201 Created)
- *
- * @example
- * POST /api/generations
- * {
- *   "source_text": "Long text content...",
- *   "model": "gpt-4o-mini"
- * }
- *
- * Response 201:
- * {
- *   "data": {
- *     "generation_id": 1,
- *     "status": "completed",
- *     "model": "gpt-4o-mini",
- *     "generated_count": 5,
- *     "generation_duration_ms": 1200,
- *     "flashcards_candidates": [...],
- *     "message": "Wygenerowano 5 flashcard'ów."
- *   },
- *   "meta": { "timestamp": "...", "status": "success" }
- * }
- */
-export const POST: APIRoute = async ({ url, request, locals }) => {
-  // TODO: Na etapie wdrażania middleware JWT będzie weryfikować token
-  // Dla teraz używamy DEFAULT_USER_ID
+export const POST: APIRoute = withProblemHandling(async ({ request, locals }) => {
   const userId = DEFAULT_USER_ID;
-  const instance = url.pathname; // np. "/api/generations"
+  const reqId = ensureRequestId(request.headers);
+  const logger = createLogger({ context: "POST /api/generations", requestId: reqId });
 
-  // Krok 1: Rate limiting check
+  // Rate limiting check - rzuć DomainError jeśli limit przekroczony
   if (!checkRateLimit(userId)) {
-    return rateLimitExceeded(instance);
+    throw generationErrors.creators.ProviderError({
+      detail: "Limit żądań przekroczony. Maksymalnie 5 żądań na minutę.",
+      cause: new Error("RATE_LIMIT_EXCEEDED"),
+    });
+    // Note: withProblemHandling zmieni status na 429
   }
 
-  // Krok 2: Walidacja JSON body + schema
-  const validation = await validateBody(request, createGenerationCommandSchema, instance);
-  if (!validation.success) {
-    return validation.response as Response;
-  }
+  // Walidacja body (rzuca DomainError jeśli fail)
+  const commandData = await validateBody(request, createGenerationCommandSchema);
 
-  // Krok 3: Tworzenie serwisu generowania i przetwarzanie żądania
-  const generationService = new GenerationService(locals.supabase, userId);
+  logger.info("Generation request received", { userId: DEFAULT_USER_ID });
 
   try {
-    const generationResponse = await generationService.createGeneration(validation.data as CreateGenerationCommand);
-
-    // Krok 4: Zwrócenie sukcesu (201 Created)
-    return successResponse(generationResponse, 201);
-  } catch (error) {
-    // Obsługa błędów z serwisu generowania
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-
-    // eslint-disable-next-line no-console
-    console.error("[POST /api/generations]", {
-      userId,
-      timestamp: new Date().toISOString(),
-      error: errorMessage,
+    const generationService = new GenerationService(locals.supabase, userId, logger);
+    const generationResponse = await generationService.createGeneration({
+      source_text: commandData.source_text,
+      model: commandData.model ?? "gpt-4o-mini",
+      aiParameters: commandData.aiParameters, // Opcjonalne, może być undefined
     });
 
-    // Mapowanie błędów na odpowiednie kody HTTP
-    if (errorMessage === "GENERATION_CREATE_FAILED" || errorMessage === "GENERATION_UPDATE_FAILED") {
-      return serviceUnavailable(instance); // 503
+    logger.info("Generation request completed", { generationId: generationResponse.generation_id });
+
+    return successResponse(generationResponse);
+  } catch (err) {
+    logger.error("Generation request failed", { error: err });
+    // Jeśli już to DomainError - propaguj
+    if (err instanceof Error && "code" in err) {
+      throw err;
     }
 
-    if (errorMessage === "LLM_SERVICE_UNAVAILABLE") {
-      return llmUnavailable(instance); // 503
-    }
-
-    if (errorMessage === "LLM_GENERATION_FAILED" || errorMessage === "LLM_TIMEOUT") {
-      return llmTimeout(instance); // 504
-    }
-
-    // Ogólny błąd serwera
-    return internalError(instance); // 500
+    // Fallback - rzuć aby withProblemHandling go obsłużył
+    throw err;
   }
-};
+});

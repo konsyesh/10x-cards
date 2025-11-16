@@ -8,10 +8,7 @@ interface UseUnsavedChangesGuardOptions {
 /**
  * Hook do śledzenia niezapisanych zmian i ostrzegania przy opuszczaniu strony
  */
-export const useUnsavedChangesGuard = (
-  hasChanges: boolean,
-  options: UseUnsavedChangesGuardOptions = {}
-) => {
+export const useUnsavedChangesGuard = (hasChanges: boolean, options: UseUnsavedChangesGuardOptions = {}) => {
   const { enabled = true, onWarning } = options;
   const [showModal, setShowModal] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null);

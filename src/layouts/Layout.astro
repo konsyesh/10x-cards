@@ -2,6 +2,7 @@
 import "../styles/global.css";
 import { ModeToggle } from "@/components/ModeToggle";
 import { ThemeSelector } from "@/components/ThemeSelector";
+import { Toaster } from "@/components/ui/sonner";
 
 interface Props {
   title?: string;
@@ -64,6 +65,7 @@ const { title = "10x Astro Starter" } = Astro.props;
   <body>
     <ModeToggle client:load />
     <ThemeSelector client:load />
+    <Toaster position="top-center" client:load />
     <a href="/" class="text-link">Home</a>
     <a href="/generate" class="text-link">Generate</a>
     <slot />

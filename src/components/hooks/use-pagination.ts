@@ -4,7 +4,7 @@ import type { PaginationState } from "@/types";
 /**
  * Hook do obsługi lokalnej paginacji
  */
-export const usePagination = <T,>(items: T[], perPage: number = 30) => {
+export const usePagination = <T>(items: T[], perPage = 30) => {
   const [page, setPage] = useState(1);
 
   const state: PaginationState = useMemo(
@@ -24,10 +24,13 @@ export const usePagination = <T,>(items: T[], perPage: number = 30) => {
     return items.slice(start, end);
   }, [items, page, perPage]);
 
-  const goToPage = useCallback((newPage: number) => {
-    const maxPage = Math.max(1, totalPages);
-    setPage(Math.min(Math.max(newPage, 1), maxPage));
-  }, [totalPages]);
+  const goToPage = useCallback(
+    (newPage: number) => {
+      const maxPage = Math.max(1, totalPages);
+      setPage(Math.min(Math.max(newPage, 1), maxPage));
+    },
+    [totalPages]
+  );
 
   const nextPage = useCallback(() => {
     goToPage(page + 1);

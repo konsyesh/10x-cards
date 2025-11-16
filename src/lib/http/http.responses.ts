@@ -1,56 +1,50 @@
-export interface FieldError {
-  field: string;
-  message: string;
-}
+/**
+ * src/lib/http/http.responses.ts
+ *
+ * RFC 7807 compliant response helpers
+ */
 
-export function successResponse<T>(data: T, status = 200): Response {
-  const body = {
-    data,
-    meta: {
-      timestamp: new Date().toISOString(),
-      status: "success",
-    },
-  };
-
-  return new Response(JSON.stringify(body), {
-    status,
+/**
+ * 200 Success response
+ */
+export function successResponse<T>(data: T, init?: ResponseInit): Response {
+  return new Response(JSON.stringify(data), {
+    status: 200,
+    ...init,
     headers: {
-      "Content-Type": "application/json; charset=utf-8",
+      "content-type": "application/json",
+      ...(init?.headers ?? {}),
     },
   });
 }
 
-export function errorResponse(args: {
-  code: string; // np. "VALIDATION_ERROR"
-  message: string; // np. "Walidacja parametrów nie powiodła się"
-  status: number; // np. 422
-  details?: FieldError[]; // np. [ { field: "source_text", message: "..."} ]
-  instance?: string; // np. "/api/generations"
-  hint?: string; // opcjonalnie podpowiedź dla klienta
-  docs?: string; // opcjonalnie link do dokumentacji błędu
-  traceId?: string; // opcjonalnie ID requestu do logów
-}): Response {
-  const body = {
-    error: {
-      code: args.code,
-      message: args.message,
-      details: args.details,
-      httpStatus: args.status,
-      instance: args.instance,
-      hint: args.hint,
-      docs: args.docs,
-      traceId: args.traceId,
-    },
-    meta: {
-      timestamp: new Date().toISOString(),
-      status: "error",
-    },
+/**
+ * 201 Created response
+ */
+export function createdResponse<T>(data: T, location?: string, init?: ResponseInit): Response {
+  const headers: HeadersInit = {
+    "content-type": "application/json",
+    ...(init?.headers ?? {}),
   };
+  if (location) {
+    headers.location = location;
+  }
+  return new Response(JSON.stringify(data), {
+    status: 201,
+    ...init,
+    headers,
+  });
+}
 
-  return new Response(JSON.stringify(body), {
-    status: args.status,
+/**
+ * 204 No Content response
+ */
+export function noContentResponse(init?: ResponseInit): Response {
+  return new Response(null, {
+    status: 204,
+    ...init,
     headers: {
-      "Content-Type": "application/json; charset=utf-8",
+      ...(init?.headers ?? {}),
     },
   });
 }

@@ -5,7 +5,7 @@ import type {
   CreateFlashcardItemCommand,
   CandidateVM,
 } from "@/types";
-import { useApi } from "./use-api";
+import { fetchJson, ApiError } from "@/lib/http/http.fetcher";
 
 const BATCH_SIZE = 100;
 
@@ -15,13 +15,14 @@ interface SaveState {
   savedCount?: number;
   totalBatches?: number;
   currentBatch?: number;
+  errorCode?: string;
 }
 
 /**
  * Hook do zapisywania flashcards z chunkowaniem do 100 itemów
+ * Obsługuje RFC 7807 ProblemDetails błędy
  */
 export const useSaveFlashcards = () => {
-  const { fetchJson } = useApi();
   const [state, setState] = useState<SaveState>({ status: "idle" });
 
   const saveFlashcards = async (candidates: CandidateVM[], collectionId: number | null = null): Promise<boolean> => {
@@ -59,24 +60,18 @@ export const useSaveFlashcards = () => {
           message: `Zapisuję partię ${i + 1} z ${batches.length}...`,
         });
 
-        const result = await fetchJson<CreateFlashcardsResponseDTO>("/api/flashcards", {
+        // Fetch zwraca raw CreateFlashcardsResponseDTO na sukces
+        // lub rzuca ApiError na problem+json
+        const response = await fetchJson<CreateFlashcardsResponseDTO>("/api/flashcards", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: {
+          body: JSON.stringify({
             flashcards: batch,
             collection_id: collectionId,
-          } satisfies CreateFlashcardsCommand,
+          } satisfies CreateFlashcardsCommand),
         });
 
-        if (!result.success) {
-          setState({
-            status: "error",
-            message: result.error.error.message || "Błąd zapisywania",
-          });
-          return false;
-        }
-
-        totalSaved += result.data.saved_count;
+        // RFC 7807: fetchJson zwraca raw DTO na sukces (200/201)
+        totalSaved += response.saved_count;
       }
 
       setState({
@@ -86,10 +81,42 @@ export const useSaveFlashcards = () => {
       });
       return true;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Nieznany błąd";
+      // Obsługa RFC 7807 błędów
+      if (err instanceof ApiError) {
+        setState({
+          status: "error",
+          errorCode: err.problem.code,
+          message: err.problem.detail,
+        });
+        // Meta zawiera diagnostykę (requestId dla supportu)
+        // eslint-disable-next-line no-console
+        console.error("[useSaveFlashcards] API Error:", {
+          code: err.problem.code,
+          title: err.problem.title,
+          detail: err.problem.detail,
+          requestId: err.requestId,
+          meta: err.problem.meta,
+        });
+        return false;
+      }
+
+      // Obsługa błędów sieci
+      if (err instanceof Error) {
+        setState({
+          status: "error",
+          errorCode: "NETWORK_ERROR",
+          message: err.message,
+        });
+        // eslint-disable-next-line no-console
+        console.error("[useSaveFlashcards] Network error:", err.message);
+        return false;
+      }
+
+      // Unknown error
       setState({
         status: "error",
-        message,
+        errorCode: "UNKNOWN_ERROR",
+        message: "Nieznany błąd",
       });
       return false;
     }

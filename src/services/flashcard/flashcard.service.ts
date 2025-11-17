@@ -2,6 +2,7 @@ import type { SupabaseClient } from "../../db/supabase.client";
 import type { CreateFlashcardsCommand, FlashcardDTO, CreateFlashcardItemCommand } from "../../types";
 import type { FlashcardRow } from "../../types";
 import { flashcardErrors } from "./flashcard.errors";
+import { fromSupabase } from "@/lib/errors/map-supabase";
 
 /**
  * Serwis do obsługi operacji flashcard'ów
@@ -49,10 +50,13 @@ export class FlashcardService {
       .insert(flashcardsToInsert)
       .select();
 
-    if (insertError || !savedFlashcards) {
+    if (insertError) {
+      throw fromSupabase(insertError as any);
+    }
+
+    if (!savedFlashcards) {
       throw flashcardErrors.creators.DatabaseError({
-        detail: `Failed to save flashcards: ${insertError?.message}`,
-        cause: insertError,
+        detail: "Failed to save flashcards: unknown error",
       });
     }
 
@@ -75,7 +79,13 @@ export class FlashcardService {
     // Batch query - sprawdzenie wszystkich naraz
     const { data, error } = await this.supabase.from("generations").select("id, user_id").in("id", generationIds);
 
-    if (error) throw error;
+    if (error) {
+      throw flashcardErrors.creators.DatabaseError({
+        detail: `Failed to validate generation references: ${error.message}`,
+        meta: { generationIds },
+        cause: error,
+      });
+    }
 
     const generationMap = new Map(data?.map((g) => [g.id, g]) ?? []);
 

@@ -33,6 +33,8 @@ const PUBLIC_PATHS = [
   "/api/auth/update-password",
   "/api/auth/verify-otp",
   "/api/auth/resend-verification",
+  "/api/flashcards",
+  "/api/flashcards/320",
 ];
 
 // Statyczne zasoby (favicon, assets)
@@ -95,8 +97,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return redirect("/generate", 302);
   }
 
+  const isFlashcardShow = pathname.startsWith("/api/flashcards/");
   // Sprawdź czy ścieżka jest publiczna
-  const isPublicPath = PUBLIC_PATHS.includes(pathname);
+  const isPublicPath = PUBLIC_PATHS.includes(pathname) || isFlashcardShow;
 
   // Jeśli nie jest publiczna i brak sesji → wymagana autentykacja
   if (!isPublicPath && !user) {

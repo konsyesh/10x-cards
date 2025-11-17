@@ -102,6 +102,26 @@ export interface UpdateFlashcardCommand {
 }
 
 /**
+ * Query do listowania flashcards z filtrowaniem, sortowaniem i paginacją
+ */
+export interface ListFlashcardsQuery {
+  /** Numer strony (default: 1) */
+  page?: number;
+  /** Liczba elementów na stronę (default: 20, max: 100) */
+  per_page?: number;
+  /** Pełnotekstowe wyszukiwanie w polach front/back */
+  search?: string;
+  /** Filtrowanie po collection_id */
+  collection_id?: number;
+  /** Filtrowanie po źródle */
+  source?: FlashcardSource;
+  /** Pole sortowania (default: "created_at") */
+  sort?: "created_at" | "updated_at" | "front";
+  /** Kierunek sortowania (default: "desc") */
+  order?: "asc" | "desc";
+}
+
+/**
  * Komenda do utworzenia nowej kolekcji
  */
 export interface CreateCollectionCommand {

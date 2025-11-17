@@ -1,5 +1,14 @@
 import type { SupabaseClient } from "../../db/supabase.client";
-import type { CreateFlashcardsCommand, FlashcardDTO, CreateFlashcardItemCommand } from "../../types";
+import type {
+  CreateFlashcardsCommand,
+  FlashcardDTO,
+  CreateFlashcardItemCommand,
+  ListFlashcardsQuery,
+  UpdateFlashcardCommand,
+  UpdateFlashcardResponseDTO,
+  DeleteResponseDTO,
+  PaginationDTO,
+} from "../../types";
 import type { FlashcardRow } from "../../types";
 import { flashcardErrors } from "./flashcard.errors";
 import { fromSupabase } from "@/lib/errors/map-supabase";
@@ -129,10 +138,186 @@ export class FlashcardService {
   }
 
   /**
+   * Listuje flashcards z filtrowaniem, sortowaniem i paginacją
+   *
+   * @param query - ListFlashcardsQuery z parametrami filtrowania i paginacji
+   * @returns Obiekt z flashcards i paginacją
+   */
+  async listFlashcards(query: ListFlashcardsQuery): Promise<{ flashcards: FlashcardDTO[]; pagination: PaginationDTO }> {
+    const page = query.page ?? 1;
+    const perPage = query.per_page ?? 20;
+    const sort = query.sort ?? "created_at";
+    const order = query.order ?? "desc";
+
+    // Buduj query z filtrowaniem po user_id (wymagane)
+    let supabaseQuery = this.supabase.from("flashcards").select("*", { count: "exact" }).eq("user_id", this.userId);
+
+    // Filtrowanie po collection_id (jeśli podane)
+    if (query.collection_id !== undefined) {
+      supabaseQuery = supabaseQuery.eq("collection_id", query.collection_id);
+    }
+
+    // Filtrowanie po source (jeśli podane)
+    if (query.source) {
+      supabaseQuery = supabaseQuery.eq("source", query.source);
+    }
+
+    // Full-text search w front/back (jeśli podane)
+    if (query.search) {
+      const searchPattern = `%${query.search}%`;
+      supabaseQuery = supabaseQuery.or(`front.ilike.${searchPattern},back.ilike.${searchPattern}`);
+    }
+
+    // Sortowanie
+    supabaseQuery = supabaseQuery.order(sort, { ascending: order === "asc" });
+
+    // Paginacja
+    const from = (page - 1) * perPage;
+    const to = from + perPage - 1;
+    supabaseQuery = supabaseQuery.range(from, to);
+
+    const { data, error, count } = await supabaseQuery;
+
+    if (error) {
+      throw fromSupabase(error as any);
+    }
+
+    const flashcards = (data as FlashcardRow[]) ?? [];
+    const total = count ?? 0;
+    const totalPages = Math.ceil(total / perPage);
+
+    return {
+      flashcards: this.mapToFlashcardDTOs(flashcards),
+      pagination: {
+        page,
+        per_page: perPage,
+        total,
+        total_pages: totalPages,
+      },
+    };
+  }
+
+  /**
+   * Pobiera pojedynczą flashcard po ID
+   *
+   * @param id - ID flashcard
+   * @returns FlashcardDTO
+   * @throws flashcardErrors.creators.NotFound jeśli nie znaleziono lub należy do innego użytkownika
+   */
+  async getFlashcardById(id: number): Promise<FlashcardDTO> {
+    const { data, error } = await this.supabase
+      .from("flashcards")
+      .select("*")
+      .eq("id", id)
+      .eq("user_id", this.userId)
+      .single();
+
+    if (error || !data) {
+      throw flashcardErrors.creators.NotFound({
+        detail: `Flashcard ${id} not found`,
+        meta: { flashcardId: id },
+        cause: error,
+      });
+    }
+
+    return this.mapToFlashcardDTO(data as FlashcardRow);
+  }
+
+  /**
+   * Aktualizuje flashcard
+   *
+   * @param id - ID flashcard
+   * @param command - UpdateFlashcardCommand z polami do aktualizacji
+   * @returns UpdateFlashcardResponseDTO
+   * @throws flashcardErrors.creators.NotFound jeśli nie znaleziono lub należy do innego użytkownika
+   */
+  async updateFlashcard(id: number, command: UpdateFlashcardCommand): Promise<UpdateFlashcardResponseDTO> {
+    // Walidacja collection_id (jeśli podany)
+    if (command.collection_id !== undefined && command.collection_id !== null) {
+      await this.validateCollectionAccess(command.collection_id);
+    }
+
+    // Przygotuj update object (tylko podane pola)
+    const updateData: Partial<FlashcardRow> = {};
+    if (command.front !== undefined) {
+      updateData.front = command.front;
+    }
+    if (command.back !== undefined) {
+      updateData.back = command.back;
+    }
+    if (command.collection_id !== undefined) {
+      updateData.collection_id = command.collection_id;
+    }
+
+    const { data, error } = await this.supabase
+      .from("flashcards")
+      .update(updateData)
+      .eq("id", id)
+      .eq("user_id", this.userId)
+      .select()
+      .single();
+
+    if (error || !data) {
+      throw flashcardErrors.creators.NotFound({
+        detail: `Flashcard ${id} not found`,
+        meta: { flashcardId: id },
+        cause: error,
+      });
+    }
+
+    const updated = data as FlashcardRow;
+    return {
+      id: updated.id,
+      front: updated.front,
+      back: updated.back,
+      source: updated.source,
+      collection_id: updated.collection_id,
+      updated_at: updated.updated_at,
+    };
+  }
+
+  /**
+   * Usuwa flashcard
+   *
+   * @param id - ID flashcard
+   * @returns DeleteResponseDTO
+   * @throws flashcardErrors.creators.NotFound jeśli nie znaleziono lub należy do innego użytkownika
+   */
+  async deleteFlashcard(id: number): Promise<DeleteResponseDTO> {
+    const { data, error } = await this.supabase
+      .from("flashcards")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", this.userId)
+      .select()
+      .single();
+
+    if (error || !data) {
+      throw flashcardErrors.creators.NotFound({
+        detail: `Flashcard ${id} not found`,
+        meta: { flashcardId: id },
+        cause: error,
+      });
+    }
+
+    return {
+      id,
+      message: "Flashcard successfully deleted",
+    };
+  }
+
+  /**
    * Mapuje FlashcardRow[] na FlashcardDTO[] (przycięte pola)
    */
   private mapToFlashcardDTOs(rows: FlashcardRow[]): FlashcardDTO[] {
-    return rows.map((row) => ({
+    return rows.map((row) => this.mapToFlashcardDTO(row));
+  }
+
+  /**
+   * Mapuje FlashcardRow na FlashcardDTO (przycięte pola)
+   */
+  private mapToFlashcardDTO(row: FlashcardRow): FlashcardDTO {
+    return {
       id: row.id,
       front: row.front,
       back: row.back,
@@ -141,7 +326,7 @@ export class FlashcardService {
       collection_id: row.collection_id,
       created_at: row.created_at,
       updated_at: row.updated_at,
-    }));
+    };
   }
 
   /**

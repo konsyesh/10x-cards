@@ -24,6 +24,28 @@ export class FlashcardService {
   ) {}
 
   /**
+   * Pobiera surowy rekord flashcard z DB i wyrzuca NotFound jeśli nie istnieje
+   */
+  private async fetchFlashcardRow(id: number): Promise<FlashcardRow> {
+    const { data, error } = await this.supabase
+      .from("flashcards")
+      .select("*")
+      .eq("id", id)
+      .eq("user_id", this.userId)
+      .single();
+
+    if (error || !data) {
+      throw flashcardErrors.creators.NotFound({
+        detail: `Flashcard ${id} not found`,
+        meta: { flashcardId: id },
+        cause: error,
+      });
+    }
+
+    return data as FlashcardRow;
+  }
+
+  /**
    * Tworzy fiszki na podstawie komendy
    * - Waliduje referencje do generations i collections
    * - Wykonuje batch insert
@@ -205,22 +227,8 @@ export class FlashcardService {
    * @throws flashcardErrors.creators.NotFound jeśli nie znaleziono lub należy do innego użytkownika
    */
   async getFlashcardById(id: number): Promise<FlashcardDTO> {
-    const { data, error } = await this.supabase
-      .from("flashcards")
-      .select("*")
-      .eq("id", id)
-      .eq("user_id", this.userId)
-      .single();
-
-    if (error || !data) {
-      throw flashcardErrors.creators.NotFound({
-        detail: `Flashcard ${id} not found`,
-        meta: { flashcardId: id },
-        cause: error,
-      });
-    }
-
-    return this.mapToFlashcardDTO(data as FlashcardRow);
+    const flashcard = await this.fetchFlashcardRow(id);
+    return this.mapToFlashcardDTO(flashcard);
   }
 
   /**
@@ -237,6 +245,8 @@ export class FlashcardService {
       await this.validateCollectionAccess(command.collection_id);
     }
 
+    const existingFlashcard = await this.fetchFlashcardRow(id);
+
     // Przygotuj update object (tylko podane pola)
     const updateData: Partial<FlashcardRow> = {};
     if (command.front !== undefined) {
@@ -247,6 +257,11 @@ export class FlashcardService {
     }
     if (command.collection_id !== undefined) {
       updateData.collection_id = command.collection_id;
+    }
+
+    const shouldConvertToEdited = this.shouldConvertToEditedSource(existingFlashcard, command);
+    if (shouldConvertToEdited) {
+      updateData.source = "ai-edited";
     }
 
     const { data, error } = await this.supabase
@@ -263,6 +278,10 @@ export class FlashcardService {
         meta: { flashcardId: id },
         cause: error,
       });
+    }
+
+    if (shouldConvertToEdited) {
+      await this.updateGenerationMetricsForEdit(existingFlashcard.generation_id);
     }
 
     const updated = data as FlashcardRow;
@@ -284,6 +303,8 @@ export class FlashcardService {
    * @throws flashcardErrors.creators.NotFound jeśli nie znaleziono lub należy do innego użytkownika
    */
   async deleteFlashcard(id: number): Promise<DeleteResponseDTO> {
+    const existingFlashcard = await this.fetchFlashcardRow(id);
+
     const { data, error } = await this.supabase
       .from("flashcards")
       .delete()
@@ -299,6 +320,8 @@ export class FlashcardService {
         cause: error,
       });
     }
+
+    await this.updateGenerationMetricsForDeletion(existingFlashcard);
 
     return {
       id,
@@ -355,37 +378,98 @@ export class FlashcardService {
     // Wykonaj updates dla każdej generation
     for (const [genId, counts] of Object.entries(updates)) {
       const generationIdNum = parseInt(genId, 10);
+      await this.adjustGenerationCount(generationIdNum, {
+        uneditedDelta: counts.unedited,
+        editedDelta: counts.edited,
+      });
+    }
+  }
 
-      // Odczytaj aktualną wartość obu liczników
-      const { data, error: selectError } = await this.supabase
-        .from("generations")
-        .select("accepted_unedited_count, accepted_edited_count")
-        .eq("id", generationIdNum)
-        .single();
+  /**
+   * Modyfikuje liczniki generacji o zadany delta (może być ujemny)
+   */
+  private async adjustGenerationCount(
+    generationId: number,
+    adjustments: { uneditedDelta?: number; editedDelta?: number }
+  ): Promise<void> {
+    const { uneditedDelta = 0, editedDelta = 0 } = adjustments;
+    if (!generationId || (uneditedDelta === 0 && editedDelta === 0)) {
+      return;
+    }
 
-      if (selectError || !data) {
-        // eslint-disable-next-line no-console
-        console.error(`[FlashcardService] Error reading generation ${generationIdNum}:`, selectError);
-        continue;
-      }
+    const { data, error: selectError } = await this.supabase
+      .from("generations")
+      .select("accepted_unedited_count, accepted_edited_count")
+      .eq("id", generationId)
+      .single();
 
-      // Oblicz nowe wartości: jeśli null to 0, inaczej aktualna + increment
-      const newUneditedCount = (data.accepted_unedited_count ?? 0) + counts.unedited;
-      const newEditedCount = (data.accepted_edited_count ?? 0) + counts.edited;
+    if (selectError || !data) {
+      // eslint-disable-next-line no-console
+      console.error(`[FlashcardService] Error reading generation ${generationId}:`, selectError);
+      return;
+    }
+    // Oblicz nowe wartości: jeśli null to 0, inaczej aktualna + increment
+    const newUneditedCount = Math.max(0, (data.accepted_unedited_count ?? 0) + uneditedDelta);
+    const newEditedCount = Math.max(0, (data.accepted_edited_count ?? 0) + editedDelta);
+    // Zaktualizuj obie kolumny naraz
+    const { error: updateError } = await this.supabase
+      .from("generations")
+      .update({
+        accepted_unedited_count: newUneditedCount,
+        accepted_edited_count: newEditedCount,
+      })
+      .eq("id", generationId);
 
-      // Zaktualizuj obie kolumny naraz
-      const { error: updateError } = await this.supabase
-        .from("generations")
-        .update({
-          accepted_unedited_count: newUneditedCount,
-          accepted_edited_count: newEditedCount,
-        })
-        .eq("id", generationIdNum);
+    if (updateError) {
+      // eslint-disable-next-line no-console
+      console.error(`[FlashcardService] Error updating generation ${generationId}:`, updateError);
+    }
+  }
 
-      if (updateError) {
-        // eslint-disable-next-line no-console
-        console.error(`[FlashcardService] Error updating generation ${generationIdNum}:`, updateError);
-      }
+  /**
+   * Sprawdza, czy źródło powinno zostać przeklasyfikowane na ai-edited
+   */
+  private shouldConvertToEditedSource(existing: FlashcardRow, command: UpdateFlashcardCommand): boolean {
+    if (existing.source !== "ai-full") {
+      return false;
+    }
+
+    const frontChanged = command.front !== undefined && command.front !== existing.front;
+    const backChanged = command.back !== undefined && command.back !== existing.back;
+
+    return frontChanged || backChanged;
+  }
+
+  /**
+   * Aktualizuje metryki generations po przeklasyfikowaniu karty na ai-edited
+   */
+  private async updateGenerationMetricsForEdit(generationId: number | null): Promise<void> {
+    if (!generationId) {
+      return;
+    }
+
+    await this.adjustGenerationCount(generationId, {
+      uneditedDelta: -1,
+      editedDelta: 1,
+    });
+  }
+
+  /**
+   * Aktualizuje metryki generations po usunięciu karty
+   */
+  private async updateGenerationMetricsForDeletion(flashcard: FlashcardRow): Promise<void> {
+    const generationId = flashcard.generation_id;
+    if (!generationId) {
+      return;
+    }
+
+    if (flashcard.source === "ai-full") {
+      await this.adjustGenerationCount(generationId, { uneditedDelta: -1 });
+      return;
+    }
+
+    if (flashcard.source === "ai-edited") {
+      await this.adjustGenerationCount(generationId, { editedDelta: -1 });
     }
   }
 }

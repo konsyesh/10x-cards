@@ -20,7 +20,7 @@ Authorization: Bearer YOUR_JWT_TOKEN_HERE
 # TEST 2: Sukces - Usunięcie flashcard z innym ID
 # UWAGA: Po wykonaniu tego testu flashcard zostanie usunięty!
 # ============================================================================
-DELETE http://localhost:3000/api/flashcards/5 HTTP/1.1
+DELETE http://localhost:3000/api/flashcards/314 HTTP/1.1
 Content-Type: application/json
 Authorization: Bearer YOUR_JWT_TOKEN_HERE
 

@@ -8,7 +8,7 @@ interface FlashcardsToolbarProps {
   /** Callback dla wyszukiwania */
   onSearch: (search: string) => void;
   /** Callback dla zmiany sortowania */
-  onSortChange: (sort: string, order: "asc" | "desc") => void;
+  onSortChange: (sort: "created_at" | "updated_at" | "front", order: "asc" | "desc") => void;
   /** Callback dla dodania nowej fiszki */
   onAdd: () => void;
   /** Aktualne wartości dla kontrolowanych komponentów */

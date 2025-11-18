@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FlashcardItem } from "./FlashcardItem";
-import type { FlashcardListVM } from "@/types";
+import { FlashcardsPagination } from "./FlashcardsPagination";
+import type { FlashcardListVM, PaginationDTO } from "@/types";
 
 /**
  * Formatuje źródło fiszki na czytelny tekst z polskim tłumaczeniem
@@ -59,16 +60,29 @@ const truncateText = (text: string, maxLength = 30) => {
 interface FlashcardsListProps {
   /** Lista fiszek do wyświetlenia */
   flashcards: FlashcardListVM[];
+  /** Dane paginacji */
+  pagination: PaginationDTO;
   /** Callback dla edycji fiszki */
   onEdit: (id: number) => void;
   /** Callback dla usunięcia fiszki */
   onDelete: (id: number) => void;
+  /** Callback dla zmiany strony */
+  onPageChange: (page: number) => void;
+  /** Czy trwa ładowanie */
+  isLoading?: boolean;
 }
 
 /**
  * Kontener dla listy fiszek z responsywnym widokiem (tabela/desktop, lista/mobile)
  */
-export const FlashcardsList = ({ flashcards, onEdit, onDelete }: FlashcardsListProps) => {
+export const FlashcardsList = ({
+  flashcards,
+  pagination,
+  onEdit,
+  onDelete,
+  onPageChange,
+  isLoading = false,
+}: FlashcardsListProps) => {
   if (flashcards.length === 0) {
     return (
       <div className="text-center py-12">
@@ -142,6 +156,9 @@ export const FlashcardsList = ({ flashcards, onEdit, onDelete }: FlashcardsListP
           />
         ))}
       </div>
+
+      {/* Paginacja */}
+      <FlashcardsPagination pagination={pagination} onPageChange={onPageChange} isLoading={isLoading} />
     </div>
   );
 };

@@ -42,7 +42,7 @@ export const FlashcardsPage = () => {
 
   // Obsługa toolbar - sortowanie
   const handleSortChange = useCallback(
-    (newSort: typeof sort, newOrder: typeof order) => {
+    (newSort: "created_at" | "updated_at" | "front", newOrder: "asc" | "desc") => {
       changeSort(newSort, newOrder);
       setViewState((prev) => ({ ...prev, sort: newSort, order: newOrder }));
     },
@@ -100,11 +100,15 @@ export const FlashcardsPage = () => {
       try {
         if (viewState.modalType === "create") {
           // Tworzenie nowej fiszki
+          if (!data.front || !data.back) {
+            throw new Error("Pytanie i odpowiedź są wymagane");
+          }
+
           const command: CreateFlashcardsCommand = {
             flashcards: [
               {
-                front: data.front!,
-                back: data.back!,
+                front: data.front,
+                back: data.back,
                 source: "manual",
               },
             ],
@@ -221,7 +225,14 @@ export const FlashcardsPage = () => {
       />
 
       {/* Lista fiszek */}
-      <FlashcardsList flashcards={flashcards} onEdit={handleEdit} onDelete={handleDelete} />
+      <FlashcardsList
+        flashcards={flashcards}
+        pagination={pagination}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onPageChange={changePage}
+        isLoading={loading}
+      />
 
       {/* Komunikat o ładowaniu */}
       {loading && (

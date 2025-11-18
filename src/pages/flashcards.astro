@@ -1,0 +1,29 @@
+---
+import Layout from "@/layouts/Layout.astro";
+
+const title = "Moje fiszki";
+---
+
+<Layout title={title}>
+  <div class="flashcards-page">
+    <div class="container mx-auto px-4 py-8">
+      <h1 class="text-3xl font-bold mb-6">Moje fiszki</h1>
+
+      <!-- Miejsce na komponenty React -->
+      <div id="flashcards-view" class="flashcards-view">
+        <!-- FlashcardsToolbar, FlashcardsList, FlashcardModal, ConfirmModal będą tutaj -->
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .flashcards-page {
+    min-height: 100vh;
+    background-color: hsl(var(--background));
+  }
+
+  .flashcards-view {
+    /* Podstawowe stylowanie dla kontenera komponentów React */
+  }
+</style>

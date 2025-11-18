@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { User, UserMenuItem } from "@/types";
+import { type User, type UserMenuItem } from "@/types";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,11 +28,14 @@ export function UserAvatar({ user, onLogout }: UserAvatarProps) {
 
   // Generowanie inicjałów z email
   const getInitials = (email: string): string => {
-    const parts = email.split('@')[0].split('.');
-    return parts.map(part => part.charAt(0).toUpperCase()).join('').slice(0, 2);
+    const parts = email.split("@")[0].split(".");
+    return parts
+      .map((part) => part.charAt(0).toUpperCase())
+      .join("")
+      .slice(0, 2);
   };
 
-  const initials = user.email ? getInitials(user.email) : 'U';
+  const initials = user.email ? getInitials(user.email) : "U";
 
   const menuItems: UserMenuItem[] = [
     {
@@ -41,7 +44,7 @@ export function UserAvatar({ user, onLogout }: UserAvatarProps) {
         // TODO: Implementacja profilu użytkownika
         console.log("Navigate to profile");
       },
-      icon: "UserIcon"
+      icon: "UserIcon",
     },
     {
       label: "Wyloguj się",
@@ -49,8 +52,8 @@ export function UserAvatar({ user, onLogout }: UserAvatarProps) {
         onLogout?.();
       },
       icon: "LogOut",
-      danger: true
-    }
+      danger: true,
+    },
   ];
 
   return (
@@ -72,9 +75,7 @@ export function UserAvatar({ user, onLogout }: UserAvatarProps) {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <div className="flex items-center justify-start gap-2 p-2">
           <div className="flex flex-col space-y-1 leading-none">
-            {user.email && (
-              <p className="font-medium text-sm">{user.email}</p>
-            )}
+            {user.email && <p className="font-medium text-sm">{user.email}</p>}
           </div>
         </div>
         <DropdownMenuSeparator />

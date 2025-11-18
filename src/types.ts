@@ -460,6 +460,22 @@ export type ApiErrorCode =
 
 /**
  * ============================================================================
+ * USER TYPES – Typy użytkownika
+ * ============================================================================
+ */
+
+/**
+ * Typ użytkownika aplikacji - pochodzi z Supabase auth i jest dostępny w Astro.locals.user
+ */
+export interface User {
+  /** ID użytkownika z Supabase */
+  id: string;
+  /** Email użytkownika (opcjonalny) */
+  email?: string;
+}
+
+/**
+ * ============================================================================
  * NAVIGATION TYPES – Typy dla komponentów nawigacji
  * ============================================================================
  */

@@ -1,4 +1,4 @@
-import { NavigationLink as NavigationLinkType } from "@/types";
+import { type NavigationLink as NavigationLinkType } from "@/types";
 import { cn } from "@/lib/utils";
 
 interface NavigationLinksProps {

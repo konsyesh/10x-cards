@@ -1,6 +1,6 @@
 "use client";
 
-import { User } from "@/types";
+import { type User } from "@/types";
 import { UserAvatar } from "./UserAvatar";
 import { LoginButton } from "@/components/auth/LoginButton";
 import { LogoutButton } from "@/components/auth/LogoutButton";

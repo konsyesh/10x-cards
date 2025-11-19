@@ -1,5 +1,3 @@
-import { Link } from "lucide-react";
-
 /**
  * Komponent Logo - logo lub nazwa aplikacji z linkiem do strony głównej
  *

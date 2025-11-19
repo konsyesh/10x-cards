@@ -1,9 +1,7 @@
-"use client";
-
 import { type User } from "@/types";
 import { UserAvatar } from "./UserAvatar";
 import { LoginButton } from "@/components/auth/LoginButton";
-import { LogoutButton } from "@/components/auth/LogoutButton";
+import { performLogout } from "@/lib/auth/logout";
 
 interface UserSectionProps {
   user: User | null;
@@ -15,10 +13,12 @@ interface UserSectionProps {
  * Główne elementy: div warunkowo renderujący UserAvatar lub LoginButton
  */
 export function UserSection({ user }: UserSectionProps) {
-  // Obsługa wylogowania - przekazanie do UserAvatar
-  const handleLogout = () => {
-    // Logika wylogowania jest obsługiwana przez LogoutButton w UserAvatar
-    console.log("Logout initiated from UserSection");
+  const handleLogout = async () => {
+    try {
+      await performLogout();
+    } catch {
+      // Errory są już obsłużone w helperze (toast, opis), nie trzeba nic robić.
+    }
   };
 
   return (

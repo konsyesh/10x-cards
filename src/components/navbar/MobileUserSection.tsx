@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { LogOut, User as UserIcon } from "lucide-react";
+import { performLogout } from "@/lib/auth/logout";
 
 interface MobileUserSectionProps {
   user: User | null;
@@ -22,13 +23,14 @@ export function MobileUserSection({ user, onLinkClick }: MobileUserSectionProps)
       .slice(0, 2);
   };
 
-  const handleLogout = () => {
-    // Wywołanie POST /api/auth/logout - przekierowanie jest obsługiwane automatycznie
-    const logoutForm = document.createElement("form");
-    logoutForm.method = "POST";
-    logoutForm.action = "/api/auth/logout";
-    document.body.appendChild(logoutForm);
-    logoutForm.submit();
+  const handleLogout = async () => {
+    onLinkClick?.();
+
+    try {
+      await performLogout();
+    } catch {
+      // helper już pokazuje toast i opis błędu
+    }
   };
 
   if (!user) {
@@ -68,10 +70,7 @@ export function MobileUserSection({ user, onLinkClick }: MobileUserSectionProps)
           <Button
             variant="ghost"
             className="w-full justify-start gap-3 h-auto py-2 px-3 text-destructive hover:text-destructive"
-            onClick={() => {
-              onLinkClick?.();
-              handleLogout();
-            }}
+            onClick={handleLogout}
           >
             <LogOut className="h-4 w-4" />
             <span>Wyloguj się</span>

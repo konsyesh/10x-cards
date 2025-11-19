@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import { type User, type UserMenuItem } from "@/types";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -11,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, LogOut, User as UserIcon } from "lucide-react";
+import { UserIcon, LogOut } from "lucide-react";
 
 interface UserAvatarProps {
   user: User;
@@ -61,7 +59,7 @@ export function UserAvatar({ user, onLogout }: UserAvatarProps) {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="relative h-10 w-10 rounded-full hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="relative h-8 w-8 rounded-full hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           aria-label="Menu użytkownika"
         >
           <Avatar className="h-8 w-8">
@@ -69,7 +67,6 @@ export function UserAvatar({ user, onLogout }: UserAvatarProps) {
               {initials}
             </AvatarFallback>
           </Avatar>
-          <ChevronDown className="ml-1 h-3 w-3 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>

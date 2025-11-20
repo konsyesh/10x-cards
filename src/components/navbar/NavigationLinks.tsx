@@ -13,12 +13,12 @@ interface NavigationLinksProps {
  */
 export function NavigationLinks({ currentPath, links }: NavigationLinksProps) {
   return (
-    <ul className="flex items-center gap-6" role="list">
+    <ul className="flex items-center gap-6" aria-label="Główne linki nawigacyjne">
       {links.map((link) => {
         const isActive = currentPath === link.path;
 
         return (
-          <li key={link.path}>
+          <li key={link.path} aria-label={link.label}>
             <a
               href={link.path}
               className={cn(

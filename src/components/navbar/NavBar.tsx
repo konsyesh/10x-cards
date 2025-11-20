@@ -63,13 +63,13 @@ export function NavBar({ user, currentPath = "/" }: NavBarProps) {
             <ModeToggle />
 
             {/* User Section - widoczny zawsze */}
-            <UserSection user={user} />
+            <UserSection user={user ?? null} />
 
             {/* Mobile Menu Button - widoczny tylko na mobile */}
             <MobileMenu
               isOpen={mobileMenuOpen}
               onToggle={handleMobileMenuToggle}
-              user={user}
+              user={user ?? null}
               currentPath={currentPath}
               navigationLinks={navigationLinks}
             />

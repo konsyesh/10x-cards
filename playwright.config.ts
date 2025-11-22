@@ -74,6 +74,12 @@ export default defineConfig({
       name: "setup",
       testMatch: "**/setup/**/*.setup.ts",
       use: chromeUse,
+      teardown: "cleanup db",
+    },
+    {
+      name: "cleanup db",
+      testMatch: "**/setup/**/*.teardown.ts",
+      use: chromeUse,
     },
     {
       name: "e2e tests - logged in",

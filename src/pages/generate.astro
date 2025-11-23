@@ -1,6 +1,11 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import GenerateView from "@/components/generate/GenerateView";
+import { isFeatureEnabled } from "@/features";
+
+if (!isFeatureEnabled("generations")) {
+  return Astro.redirect("/");
+}
 ---
 
 <Layout title="Generuj Karty">

@@ -18,11 +18,12 @@ import { authErrors } from "@/services/auth/auth.errors";
 import { GenerationService } from "@/services/generation/generation.service";
 import { validateBody } from "@/lib/http/http.validate-body";
 import { successResponse } from "@/lib/http/http.responses";
-import { withProblemHandling } from "@/lib/errors/http";
+import { withProblemHandling, systemErrors } from "@/lib/errors/http";
 import { generationErrors } from "@/services/generation/generation.errors";
 
 import { createLogger } from "@/lib/logger";
 import { requestId as ensureRequestId } from "@/lib/errors/http";
+import { isFeatureEnabled } from "@/features";
 
 export const prerender = false;
 
@@ -103,6 +104,13 @@ function checkRateLimit(userId: string): boolean {
 }
 
 export const POST: APIRoute = withProblemHandling(async ({ request, locals }) => {
+  if (!isFeatureEnabled("generations")) {
+    throw systemErrors.creators.FeatureDisabled({
+      detail: "Generations feature is disabled in this environment",
+      meta: { feature: "generations" },
+    });
+  }
+
   if (!locals.user) {
     throw authErrors.creators.Unauthorized({ detail: "Wymagana autoryzacja" });
   }

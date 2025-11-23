@@ -1,8 +1,14 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import { LoginForm } from "@/components/auth/LoginForm";
+import { isFeatureEnabled } from "@/features";
 
 export const prerender = false;
+
+if (!isFeatureEnabled("auth")) {
+  return Astro.redirect("/");
+}
+
 const verified = Astro.url.searchParams.get("verified") === "1";
 ---
 

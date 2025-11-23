@@ -5,6 +5,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, X } from "lucide-react";
 import { MobileNavigationLinks } from "./MobileNavigationLinks";
 import { MobileUserSection } from "./MobileUserSection";
+import { FeatureGate } from "@/components/FeatureGate";
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -66,8 +67,10 @@ export function MobileMenu({ isOpen, onToggle, user, currentPath, navigationLink
             <MobileNavigationLinks currentPath={currentPath} links={navigationLinks} onLinkClick={handleLinkClick} />
           </div>
 
-          {/* Sekcja użytkownika */}
-          <MobileUserSection user={user} onLinkClick={handleLinkClick} />
+          {/* Sekcja użytkownika - widoczna tylko gdy auth feature jest włączony */}
+          <FeatureGate feature="auth">
+            <MobileUserSection user={user} onLinkClick={handleLinkClick} />
+          </FeatureGate>
         </div>
       </SheetContent>
     </Sheet>

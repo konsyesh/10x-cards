@@ -1,8 +1,13 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import { FlashcardsPage } from "@/components/flashcards/FlashcardsPage";
+import { isFeatureEnabled } from "@/features";
 
 const title = "Moje fiszki";
+
+if (!isFeatureEnabled("flashcards")) {
+  return Astro.redirect("/");
+}
 ---
 
 <Layout title={title}>

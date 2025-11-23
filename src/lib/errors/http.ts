@@ -36,7 +36,14 @@ const SystemErrors = defineDomain("system", {
     status: 500,
     title: "errors.system.unexpected",
   },
+  FeatureDisabled: {
+    code: "system/feature-disabled",
+    status: 403,
+    title: "errors.system.feature_disabled",
+  },
 });
+
+export const systemErrors = SystemErrors;
 
 /**
  * Konwersja DomainError na RFC 7807 ProblemDetails

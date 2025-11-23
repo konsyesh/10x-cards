@@ -13,16 +13,24 @@
  */
 
 import type { APIRoute } from "astro";
-import { withProblemHandling } from "@/lib/errors/http";
+import { withProblemHandling, systemErrors } from "@/lib/errors/http";
 import { fromSupabaseAuth } from "@/lib/errors/map-supabase-auth";
 import { successResponse } from "@/lib/http/http.responses";
 import { authErrors } from "@/services/auth/auth.errors";
 import { validateAuthBody } from "@/lib/http/http.validate-body";
 import { UpdatePasswordSchema } from "@/services/auth/auth.schema";
+import { isFeatureEnabled } from "@/features";
 
 export const prerender = false;
 
 export const POST: APIRoute = withProblemHandling(async ({ request, locals }) => {
+  if (!isFeatureEnabled("auth")) {
+    throw systemErrors.creators.FeatureDisabled({
+      detail: "Auth feature is disabled in this environment",
+      meta: { feature: "auth" },
+    });
+  }
+
   // Sprawdź czy użytkownik ma aktywną sesję (wymagana sesja recovery z callback)
   if (!locals.user) {
     throw authErrors.creators.Unauthorized({

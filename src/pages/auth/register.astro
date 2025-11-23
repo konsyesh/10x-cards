@@ -1,8 +1,13 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import { RegisterForm } from "@/components/auth/RegisterForm";
+import { isFeatureEnabled } from "@/features";
 
 export const prerender = false;
+
+if (!isFeatureEnabled("auth")) {
+  return Astro.redirect("/");
+}
 ---
 
 <Layout title="Rejestracja - 10xCards">

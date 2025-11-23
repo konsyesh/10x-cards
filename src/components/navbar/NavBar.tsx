@@ -5,6 +5,8 @@ import { NavigationLinks } from "./NavigationLinks";
 import { ModeToggle } from "@/components/ModeToggle";
 import { UserSection } from "./UserSection";
 import { MobileMenu } from "./MobileMenu";
+import { isFeatureEnabled } from "@/features";
+import { FeatureGate } from "@/components/FeatureGate";
 
 interface NavBarProps {
   user?: User | null;
@@ -25,14 +27,22 @@ export function NavBar({ user, currentPath = "/" }: NavBarProps) {
       label: "Home",
       path: "/",
     },
-    {
-      label: "Generuj",
-      path: "/generate",
-    },
-    {
-      label: "Fiszki",
-      path: "/flashcards",
-    },
+    ...(isFeatureEnabled("generations")
+      ? [
+          {
+            label: "Generuj",
+            path: "/generate",
+          } as NavigationLink,
+        ]
+      : []),
+    ...(isFeatureEnabled("flashcards")
+      ? [
+          {
+            label: "Fiszki",
+            path: "/flashcards",
+          } as NavigationLink,
+        ]
+      : []),
   ];
 
   const handleMobileMenuToggle = () => {
@@ -62,8 +72,10 @@ export function NavBar({ user, currentPath = "/" }: NavBarProps) {
             {/* Theme Toggle - widoczny zawsze */}
             <ModeToggle />
 
-            {/* User Section - widoczny zawsze */}
-            <UserSection user={user ?? null} />
+            {/* User Section - widoczny tylko gdy auth feature jest włączony */}
+            <FeatureGate feature="auth">
+              <UserSection user={user ?? null} />
+            </FeatureGate>
 
             {/* Mobile Menu Button - widoczny tylko na mobile */}
             <MobileMenu

@@ -20,7 +20,7 @@ import { FlashcardService } from "@/services/flashcard/flashcard.service";
 import { validateBody } from "@/lib/http/http.validate-body";
 import { validateQuery } from "@/lib/http/http.validate-query";
 import { successResponse } from "@/lib/http/http.responses";
-import { withProblemHandling } from "@/lib/errors/http";
+import { withProblemHandling, systemErrors } from "@/lib/errors/http";
 import { flashcardErrors } from "@/services/flashcard/flashcard.errors";
 import { listFlashcardsQuerySchema } from "@/lib/http/flashcard.validators";
 import type {
@@ -29,6 +29,7 @@ import type {
   FlashcardsListResponseDTO,
   ListFlashcardsQuery,
 } from "@/types";
+import { isFeatureEnabled } from "@/features";
 
 export const prerender = false;
 
@@ -67,6 +68,13 @@ const createFlashcardsCommandSchema = z.object({
  * @returns FlashcardsListResponseDTO (200 OK)
  */
 export const GET: APIRoute = withProblemHandling(async ({ request, locals }) => {
+  if (!isFeatureEnabled("flashcards")) {
+    throw systemErrors.creators.FeatureDisabled({
+      detail: "Flashcards feature is disabled in this environment",
+      meta: { feature: "flashcards" },
+    });
+  }
+
   if (!locals.user) {
     throw authErrors.creators.Unauthorized({ detail: "Wymagana autoryzacja" });
   }
@@ -87,6 +95,13 @@ export const GET: APIRoute = withProblemHandling(async ({ request, locals }) => 
 });
 
 export const POST: APIRoute = withProblemHandling(async ({ request, locals }) => {
+  if (!isFeatureEnabled("flashcards")) {
+    throw systemErrors.creators.FeatureDisabled({
+      detail: "Flashcards feature is disabled in this environment",
+      meta: { feature: "flashcards" },
+    });
+  }
+
   if (!locals.user) {
     throw authErrors.creators.Unauthorized({ detail: "Wymagana autoryzacja" });
   }

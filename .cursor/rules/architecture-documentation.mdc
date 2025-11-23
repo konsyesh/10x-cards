@@ -1,0 +1,14 @@
+---
+alwaysApply: false
+---
+
+# Architecture Documentation Rule
+
+When creating or updating architecture documentation (e.g., ARCHITECTURE.md as a project map):
+
+- Prioritize high-level overview: Use diagrams (Mermaid) for layers, modules, and patterns – avoid code details.
+- Follow SOLID and Gang of Four: Emphasize separation of concerns (e.g., Repository Pattern for data access, SRP for services).
+- Structure as a map: Include sections like high-level diagram, key patterns, module table with responsibilities.
+- Keep compact: 1-2 pages, visual over text; link to code/details for depth.
+- Update on changes: Review after refactors; ensure new devs can grasp structure quickly without reading all code.
+- Reference existing docs: Link to ERROR_HANDLING.md for patterns; use Markdown + Mermaid for portability.

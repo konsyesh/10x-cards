@@ -14,7 +14,7 @@ interface MobileNavigationLinksProps {
  */
 export function MobileNavigationLinks({ currentPath, links, onLinkClick }: MobileNavigationLinksProps) {
   return (
-    <ul className="space-y-2" role="list">
+    <ul className="space-y-2">
       {links.map((link) => {
         const isActive = currentPath === link.path;
 

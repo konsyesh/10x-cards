@@ -1,0 +1,391 @@
+# ============================================================================
+# TESTY ENDPOINTA PATCH /api/flashcards/:flashcard_id
+# ============================================================================
+# Endpoint aktualizuje flashcard (front, back, collection_id)
+# Wymaga autoryzacji JWT (Authorization header)
+# ============================================================================
+
+# ============================================================================
+# TEST 1: Sukces - Aktualizacja tylko front
+# Oczekiwany: 200 OK, UpdateFlashcardResponseDTO z zaktualizowanymi danymi
+# ============================================================================
+PATCH http://localhost:3000/api/flashcards/314 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "front": "Zaktualizowane pytanie?"
+}
+
+###
+
+# ============================================================================
+# TEST 2: Sukces - Aktualizacja tylko back
+# ============================================================================
+PATCH http://localhost:3000/api/flashcards/314 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "back": "Zaktualizowana odpowiedź"
+}
+
+###
+
+# ============================================================================
+# TEST 3: Sukces - Aktualizacja tylko collection_id
+# ============================================================================
+PATCH http://localhost:3000/api/flashcards/314 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "collection_id": 2
+}
+
+###
+
+# ============================================================================
+# TEST 4: Sukces - Aktualizacja collection_id na null
+# ============================================================================
+PATCH http://localhost:3000/api/flashcards/314 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "collection_id": null
+}
+
+###
+
+# ============================================================================
+# TEST 5: Sukces - Aktualizacja front i back jednocześnie
+# ============================================================================
+PATCH http://localhost:3000/api/flashcards/314 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "front": "Nowe pytanie?",
+  "back": "Nowa odpowiedź"
+}
+
+###
+
+# ============================================================================
+# TEST 6: Sukces - Aktualizacja wszystkich pól jednocześnie
+# ============================================================================
+PATCH http://localhost:3000/api/flashcards/314 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "front": "Kompletnie nowe pytanie?",
+  "back": "Kompletnie nowa odpowiedź",
+  "collection_id": 1
+}
+
+###
+
+# ============================================================================
+# TEST 7: Sukces - Aktualizacja z minimalną długością front (1 znak)
+# ============================================================================
+PATCH http://localhost:3000/api/flashcards/314 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "front": "?"
+}
+
+###
+
+# ============================================================================
+# TEST 8: Sukces - Aktualizacja z maksymalną długością front (200 znaków)
+# ============================================================================
+PATCH http://localhost:3000/api/flashcards/314 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "front": "To jest bardzo długie pytanie które ma dokładnie dwieście znaków i powinno przejść walidację ponieważ jest na granicy maksymalnej długości dozwolonej dla pola front w systemie flashcards"
+}
+
+###
+
+# ============================================================================
+# TEST 9: Sukces - Aktualizacja z minimalną długością back (1 znak)
+# ============================================================================
+PATCH http://localhost:3000/api/flashcards/314 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "back": "O"
+}
+
+###
+
+# ============================================================================
+# TEST 10: Sukces - Aktualizacja z maksymalną długością back (500 znaków)
+# ============================================================================
+PATCH http://localhost:3000/api/flashcards/314 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "back": "To jest bardzo długa odpowiedź która ma dokładnie pięćset znaków i powinna przejść walidację ponieważ jest na granicy maksymalnej długości dozwolonej dla pola back w systemie flashcards. Ta odpowiedź zawiera wiele informacji które mogą być przydatne dla użytkownika podczas nauki. Flashcardy są świetnym narzędziem do zapamiętywania informacji i powtarzania materiału. Dzięki regularnemu powtarzaniu można znacznie poprawić swoją pamięć długotrwałą i lepiej zrozumieć prezentowane treści."
+}
+
+###
+
+# ============================================================================
+# TEST 11: VALIDATION_ERROR - Pusty front (pusty string)
+# Oczekiwany: 400 Bad Request - błąd walidacji
+# ============================================================================
+PATCH http://localhost:3000/api/flashcards/314 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "front": ""
+}
+
+###
+
+# ============================================================================
+# TEST 12: VALIDATION_ERROR - Front przekracza maksymalną długość (> 200 znaków)
+# Oczekiwany: 400 Bad Request - błąd walidacji
+# ============================================================================
+PATCH http://localhost:3000/api/flashcards/314 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "front": "To jest bardzo długie pytanie które ma więcej niż dwieście znaków i powinno zostać odrzucone przez walidację ponieważ przekracza maksymalną długość dozwoloną dla pola front w systemie flashcards1234567890"
+}
+
+###
+
+# ============================================================================
+# TEST 13: VALIDATION_ERROR - Pusty back (pusty string)
+# Oczekiwany: 400 Bad Request - błąd walidacji
+# ============================================================================
+PATCH http://localhost:3000/api/flashcards/314 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "back": ""
+}
+
+###
+
+# ============================================================================
+# TEST 14: VALIDATION_ERROR - Back przekracza maksymalną długość (> 500 znaków)
+# Oczekiwany: 400 Bad Request - błąd walidacji
+# ============================================================================
+PATCH http://localhost:3000/api/flashcards/314 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "back": "To jest bardzo długa odpowiedź która ma więcej niż pięćset znaków i powinna zostać odrzucona przez walidację ponieważ przekracza maksymalną długość dozwoloną dla pola back w systemie flashcards. Ta odpowiedź zawiera wiele informacji które mogą być przydatne dla użytkownika podczas nauki. Flashcardy są świetnym narzędziem do zapamiętywania informacji i powtarzania materiału. Dzięki regularnemu powtarzaniu można znacznie poprawić swoją pamięć długotrwałą i lepiej zrozumieć prezentowane treści. Dodatkowe zdania które powodują przekroczenie limitu znaków."
+}
+
+###
+
+# ============================================================================
+# TEST 15: VALIDATION_ERROR - Nieprawidłowy collection_id (ujemna liczba)
+# Oczekiwany: 400 Bad Request - błąd walidacji
+# ============================================================================
+PATCH http://localhost:3000/api/flashcards/314 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "collection_id": -1
+}
+
+###
+
+# ============================================================================
+# TEST 16: VALIDATION_ERROR - Nieprawidłowy collection_id (zero)
+# Oczekiwany: 400 Bad Request - błąd walidacji
+# ============================================================================
+PATCH http://localhost:3000/api/flashcards/314 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "collection_id": 0
+}
+
+###
+
+# ============================================================================
+# TEST 17: VALIDATION_ERROR - Nieprawidłowy collection_id (liczba zmiennoprzecinkowa)
+# Oczekiwany: 400 Bad Request - błąd walidacji
+# ============================================================================
+PATCH http://localhost:3000/api/flashcards/314 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "collection_id": 1.5
+}
+
+###
+
+# ============================================================================
+# TEST 18: VALIDATION_ERROR - Puste body (brak pól do aktualizacji)
+# Oczekiwany: 400 Bad Request - błąd walidacji (jeśli wymagane jest przynajmniej jedno pole)
+# ============================================================================
+PATCH http://localhost:3000/api/flashcards/314 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+}
+
+###
+
+# ============================================================================
+# TEST 19: VALIDATION_ERROR - Nieprawidłowy flashcard_id w URL (nie jest liczbą)
+# Oczekiwany: 400 Bad Request - błąd walidacji
+# ============================================================================
+PATCH http://localhost:3000/api/flashcards/abc HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "front": "Nowe pytanie?"
+}
+
+###
+
+# ============================================================================
+# TEST 20: VALIDATION_ERROR - Nieprawidłowy flashcard_id w URL (ujemna liczba)
+# Oczekiwany: 400 Bad Request - błąd walidacji
+# ============================================================================
+PATCH http://localhost:3000/api/flashcards/-1 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "front": "Nowe pytanie?"
+}
+
+###
+
+# ============================================================================
+# TEST 21: VALIDATION_ERROR - Nieprawidłowy flashcard_id w URL (zero)
+# Oczekiwany: 400 Bad Request - błąd walidacji
+# ============================================================================
+PATCH http://localhost:3000/api/flashcards/0 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "front": "Nowe pytanie?"
+}
+
+###
+
+# ============================================================================
+# TEST 22: NOT_FOUND - Flashcard nie istnieje
+# Oczekiwany: 404 Not Found
+# ============================================================================
+PATCH http://localhost:3000/api/flashcards/99999 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "front": "Nowe pytanie?"
+}
+
+###
+
+# ============================================================================
+# TEST 23: UNAUTHORIZED - Brak tokena autoryzacji
+# Oczekiwany: 401 Unauthorized
+# ============================================================================
+PATCH http://localhost:3000/api/flashcards/314 HTTP/1.1
+Content-Type: application/json
+
+{
+  "front": "Nowe pytanie?"
+}
+
+###
+
+# ============================================================================
+# TEST 24: UNAUTHORIZED - Nieprawidłowy token autoryzacji
+# Oczekiwany: 401 Unauthorized
+# ============================================================================
+PATCH http://localhost:3000/api/flashcards/314 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer invalid_token_here
+
+{
+  "front": "Nowe pytanie?"
+}
+
+###
+
+# ============================================================================
+# TEST 25: FORBIDDEN - Próba aktualizacji flashcard innego użytkownika
+# Oczekiwany: 403 Forbidden lub 404 Not Found (w zależności od implementacji)
+# ============================================================================
+PATCH http://localhost:3000/api/flashcards/999 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "front": "Próba aktualizacji"
+}
+
+###
+
+# ============================================================================
+# TEST 26: VALIDATION_ERROR - Nieprawidłowy typ danych (front jako liczba)
+# Oczekiwany: 400 Bad Request - błąd walidacji
+# ============================================================================
+PATCH http://localhost:3000/api/flashcards/314 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "front": 123
+}
+
+###
+
+# ============================================================================
+# TEST 27: VALIDATION_ERROR - Nieprawidłowy typ danych (back jako boolean)
+# Oczekiwany: 400 Bad Request - błąd walidacji
+# ============================================================================
+PATCH http://localhost:3000/api/flashcards/314 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "back": true
+}
+
+###
+
+# ============================================================================
+# TEST 28: VALIDATION_ERROR - Nieprawidłowy typ danych (collection_id jako string)
+# Oczekiwany: 400 Bad Request - błąd walidacji
+# ============================================================================
+PATCH http://localhost:3000/api/flashcards/314 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "collection_id": "abc"
+}
+
+###
+

@@ -18,10 +18,17 @@ import { z } from "zod";
 import { authErrors } from "@/services/auth/auth.errors";
 import { FlashcardService } from "@/services/flashcard/flashcard.service";
 import { validateBody } from "@/lib/http/http.validate-body";
+import { validateQuery } from "@/lib/http/http.validate-query";
 import { successResponse } from "@/lib/http/http.responses";
 import { withProblemHandling } from "@/lib/errors/http";
 import { flashcardErrors } from "@/services/flashcard/flashcard.errors";
-import type { CreateFlashcardsCommand, CreateFlashcardsResponseDTO } from "@/types";
+import { listFlashcardsQuerySchema } from "@/lib/http/flashcard.validators";
+import type {
+  CreateFlashcardsCommand,
+  CreateFlashcardsResponseDTO,
+  FlashcardsListResponseDTO,
+  ListFlashcardsQuery,
+} from "@/types";
 
 export const prerender = false;
 
@@ -50,6 +57,35 @@ const createFlashcardsCommandSchema = z.object({
   collection_id: z.number().int().positive().optional().nullable(),
 });
 
+/**
+ * GET /api/flashcards
+ *
+ * Listuje flashcards użytkownika z filtrowaniem, sortowaniem i paginacją
+ *
+ * @endpoint GET /api/flashcards
+ * @query ListFlashcardsQuery { page, per_page, search, collection_id, source, sort, order }
+ * @returns FlashcardsListResponseDTO (200 OK)
+ */
+export const GET: APIRoute = withProblemHandling(async ({ request, locals }) => {
+  if (!locals.user) {
+    throw authErrors.creators.Unauthorized({ detail: "Wymagana autoryzacja" });
+  }
+  const userId = locals.user.id;
+
+  // Walidacja query parameters (rzuca DomainError jeśli fail)
+  const queryData = validateQuery(request, listFlashcardsQuerySchema) as ListFlashcardsQuery;
+
+  const flashcardService = new FlashcardService(locals.supabase, userId);
+  const result = await flashcardService.listFlashcards(queryData);
+
+  const responseData: FlashcardsListResponseDTO = {
+    flashcards: result.flashcards,
+    pagination: result.pagination,
+  };
+
+  return successResponse(responseData);
+});
+
 export const POST: APIRoute = withProblemHandling(async ({ request, locals }) => {
   if (!locals.user) {
     throw authErrors.creators.Unauthorized({ detail: "Wymagana autoryzacja" });
@@ -57,12 +93,12 @@ export const POST: APIRoute = withProblemHandling(async ({ request, locals }) =>
   const userId = locals.user.id;
 
   // Walidacja body (rzuca DomainError jeśli fail)
-  const commandData: CreateFlashcardsCommand = await validateBody(request, createFlashcardsCommandSchema);
+  const commandData = await validateBody(request, createFlashcardsCommandSchema);
 
   // Normalizuj collection_id: undefined → null
   const normalizedCommand: CreateFlashcardsCommand = {
-    ...commandData,
-    collection_id: commandData.collection_id ?? null,
+    flashcards: commandData.flashcards,
+    collection_id: commandData.collection_id !== undefined ? commandData.collection_id : null,
   };
 
   try {

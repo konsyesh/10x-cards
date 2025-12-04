@@ -6,11 +6,11 @@ Dokumentacja systemu obsługi błędów w projekcie 10xCards opartego na RFC 780
 
 System error handling jest zbudowany na architekturze **Pattern #2** (Single Class + Code Mapping):
 
-1. **Pojedyncza klasa `DomainError`** - reprezentuje błędy wewnętrze
-2. **Rejestr kodów `ERROR_REGISTRY`** - mapowanie kodów na HTTP status
-3. **Mapery brzegowe** - konwersja zewnętrznych errors (Zod, Supabase, AI) na `DomainError`
-4. **RFC 7807 `ProblemDetails`** - standardowy format odpowiedzi HTTP
-5. **`withProblemHandling` wrapper** - centralne miejsce serializacji błędów
+1. **Pojedynczy typ `DomainError` i fabryki domen** – reprezentuje błędy wewnętrzne
+2. **Rejestr błędów domenowych przez `defineDomain`** – mapowanie kodów na HTTP status
+3. **Mapery brzegowe** – konwersja zewnętrznych errors (Zod, Supabase, AI) na `DomainError`
+4. **RFC 7807 `ProblemDetails`** – standardowy format odpowiedzi HTTP
+5. **`withProblemHandling` wrapper** – centralne miejsce serializacji błędów
 
 ## Struktura plików
 
@@ -37,7 +37,7 @@ src/
       auth.errors.ts       # Błędy domeny auth
   pages/
     api/
-      flashcards.ts        # Endpoint POST /api/flashcards (owinięty w withProblemHandling)
+      flashcards/index.ts  # Endpoint POST /api/flashcards (owinięty w withProblemHandling)
       generations.ts       # Endpoint POST /api/generations (owinięty w withProblemHandling)
   middleware/
     index.ts              # Korelacja X-Request-ID dla SSR
@@ -47,7 +47,7 @@ src/
 
 ## Domeny błędów
 
-Projekt definiuje 4 domeny:
+Projekt definiuje 5 domen:
 
 ### 1. `flashcard` - Błędy kart
 
@@ -98,10 +98,36 @@ export const authErrors = defineDomain("auth", {
   Unauthorized: { code: "auth/unauthorized", status: 401, title: "errors.auth.unauthorized" },
   Forbidden: { code: "auth/forbidden", status: 403, title: "errors.auth.forbidden" },
   InvalidCredentials: { code: "auth/invalid-credentials", status: 401, title: "errors.auth.invalid_credentials" },
+  ValidationFailed: { code: "auth/validation-failed", status: 400, title: "errors.auth.validation_failed" },
+  UserExists: { code: "auth/user-exists", status: 409, title: "errors.auth.user_exists" },
+  EmailNotConfirmed: { code: "auth/email-not-confirmed", status: 403, title: "errors.auth.email_not_confirmed" },
+  RateLimited: { code: "auth/rate-limited", status: 429, title: "errors.auth.rate_limited" },
+  ProviderError: { code: "auth/provider-error", status: 502, title: "errors.auth.provider_error" },
+  TokenExpired: { code: "auth/token-expired", status: 410, title: "errors.auth.token_expired" },
 });
 ```
 
-### 4. `system` - Błędy systemowe (fallback)
+### 4. `ai` - Błędy serwisu AI (AIService)
+
+```typescript
+export const aiErrors = defineDomain("ai", {
+  InvalidInput: { code: "ai/invalid-input", status: 400, title: "errors.ai.invalid_input" },
+  InvalidConfig: { code: "ai/invalid-config", status: 400, title: "errors.ai.invalid_config" },
+  Unauthorized: { code: "ai/unauthorized", status: 401, title: "errors.ai.unauthorized" },
+  Forbidden: { code: "ai/forbidden", status: 403, title: "errors.ai.forbidden" },
+  BadRequest: { code: "ai/bad-request", status: 400, title: "errors.ai.bad_request" },
+  RateLimited: { code: "ai/rate-limited", status: 429, title: "errors.ai.rate_limited" },
+  Timeout: { code: "ai/timeout", status: 408, title: "errors.ai.timeout" },
+  ProviderError: { code: "ai/provider-error", status: 502, title: "errors.ai.provider_error" },
+  ServiceUnavailable: { code: "ai/service-unavailable", status: 503, title: "errors.ai.service_unavailable" },
+  SchemaError: { code: "ai/schema-error", status: 422, title: "errors.ai.schema_error" },
+  ValidationFailed: { code: "ai/validation-failed", status: 422, title: "errors.ai.validation_failed" },
+  ParseError: { code: "ai/parse-error", status: 422, title: "errors.ai.parse_error" },
+  RetryExhausted: { code: "ai/retry-exhausted", status: 503, title: "errors.ai.retry_exhausted" },
+});
+```
+
+### 5. `system` - Błędy systemowe (fallback)
 
 ```typescript
 const SystemErrors = defineDomain("system", {
@@ -293,7 +319,7 @@ Mapuje:
 
 - `status 404` → `flashcard/not-found` (404)
 - `code PGRST116` → `flashcard/not-found` (404)
-- `status 429` → `generation/provider-error` (429)
+- `status 429` → `flashcard/database-error` (status nadpisany na 429, tytuł `errors.common.rate_limit_exceeded`)
 - inne → `flashcard/database-error` (500)
 
 ### AI SDK Errors
@@ -467,7 +493,7 @@ Jeśli chcesz dodać nowy typ błędu:
 A: Zawsze 404 - nie ujawniaj istnienia zasobów cudzych użytkowników.
 
 **P: Jak obsługiwać rate limits?**
-A: Mapuj na 429 (`status: 429`) z kodem `generation/provider-error` lub domenowym.
+A: Mapuj na 429 (`status: 429`) z kodem domenowym (np. `flashcard/database-error` dla DB, `generation/provider-error`, `auth/rate-limited`, `ai/rate-limited`).
 
 **P: Czy mogę zmienić status dla istniejącego kodu?**
 A: Nie bez konsultacji - zmień cały kod zamiast tylko statusu.

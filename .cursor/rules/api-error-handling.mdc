@@ -1,0 +1,54 @@
+---
+description: Error handling rules for API endpoints using RFC 7807
+globs: src/pages/api/**/*.ts
+alwaysApply: false
+---
+
+# API Error Handling
+
+## Core Rules
+
+1. **Always wrap handler** in `withProblemHandling()` - handles all errors automatically
+2. **Validate body** with `validateBody()` or `validateAuthBody()` (for auth endpoints) - throws DomainError on failure
+3. **Check authorization** - if `!locals.user`, throw `authErrors.creators.Unauthorized({ detail: "..." })`
+4. **Throw DomainError** from services - never return Response objects or use `toProblem()`/`jsonProblem()`
+5. **Return success responses** - use `successResponse()`, `createdResponse()`, `noContentResponse()`
+6. **Never catch errors** - let `withProblemHandling` handle them
+
+## Minimal Endpoint Pattern
+
+```ts
+import { withProblemHandling } from "@/lib/errors/http";
+import { validateBody } from "@/lib/http/http.validate-body";
+import { createdResponse } from "@/lib/http/http.responses";
+import { authErrors } from "@/services/auth/auth.errors";
+import { z } from "zod";
+
+const schema = z.object({
+  /* ... */
+});
+
+export const POST: APIRoute = withProblemHandling(async ({ request, locals }) => {
+  // Auth check (if required)
+  if (!locals.user) {
+    throw authErrors.creators.Unauthorized({ detail: "Wymagana autoryzacja" });
+  }
+
+  const data = await validateBody(request, schema);
+  const result = await service.create(data);
+  return createdResponse(result);
+});
+```
+
+## Domain Errors
+
+- Throw from services: `flashcardErrors.creators.NotFound({ detail: "..." })`
+- Map external errors: `fromSupabase(error)`, `fromAI(error)`, `fromZod(error)`
+- Never serialize `cause` - only for logs/Sentry
+- Status codes: 400 for validation, 422 only for AI content policy violations
+
+## Response Format
+
+- **Success**: `{ data, meta: { timestamp } }` (200/201/204)
+- **Error**: RFC 7807 `application/problem+json` with `code`, `title`, `detail`, `meta`
+- **Headers**: `X-Request-ID` added automatically

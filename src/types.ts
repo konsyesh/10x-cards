@@ -460,6 +460,61 @@ export type ApiErrorCode =
 
 /**
  * ============================================================================
+ * USER TYPES – Typy użytkownika
+ * ============================================================================
+ */
+
+/**
+ * Typ użytkownika aplikacji - pochodzi z Supabase auth i jest dostępny w Astro.locals.user
+ */
+export interface User {
+  /** ID użytkownika z Supabase */
+  id: string;
+  /** Email użytkownika (opcjonalny) */
+  email?: string;
+}
+
+/**
+ * ============================================================================
+ * NAVIGATION TYPES – Typy dla komponentów nawigacji
+ * ============================================================================
+ */
+
+/** Definicja pojedynczego linku nawigacyjnego */
+export interface NavigationLink {
+  /** Etykieta wyświetlana */
+  label: string;
+  /** Ścieżka URL */
+  path: string;
+  /** Opcjonalna ikona (dla mobile) */
+  icon?: string;
+}
+
+/** Stan menu mobilnego */
+export type MobileMenuState = "open" | "closed";
+
+/** Typ motywu aplikacji */
+export type Theme = "light" | "dark" | "system";
+
+/** Propsy głównego komponentu NavBar */
+export interface NavBarProps {
+  /** Dane użytkownika z Supabase auth */
+  user?: User | null;
+  /** Aktualna ścieżka dla wyróżniania aktywnej zakładki */
+  currentPath?: string;
+}
+
+/** Element menu użytkownika */
+export interface UserMenuItem {
+  label: string;
+  action: () => void;
+  icon?: string;
+  /** Czy element jest destrukcyjny (np. wylogowanie) */
+  danger?: boolean;
+}
+
+/**
+ * ============================================================================
  * FRONTEND VIEWMODELS – Typy dla komponenty React widoku Generate
  * ============================================================================
  */

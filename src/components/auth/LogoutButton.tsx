@@ -1,10 +1,7 @@
-"use client";
-
 import { useState } from "react";
-import { fetchJson, ApiError } from "@/lib/http/http.fetcher";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { performLogout } from "@/lib/auth/logout";
 
 interface LogoutButtonProps extends React.ComponentProps<typeof Button> {
   onLogoutSuccess?: () => void;
@@ -23,32 +20,11 @@ export function LogoutButton({ className, onLogoutSuccess, ...props }: LogoutBut
     setIsLoading(true);
 
     try {
-      // Wywołaj endpoint logout (204 No Content)
-      await fetchJson("/api/auth/logout", {
-        method: "POST",
-      });
-
-      toast.success("Wylogowano pomyślnie");
-
-      // Callback jeśli podany
-      if (onLogoutSuccess) {
-        onLogoutSuccess();
-      }
-
-      // Redirect do strony logowania
-      window.location.href = "/auth/login";
-    } catch (err) {
+      await performLogout(onLogoutSuccess);
+    } catch {
+      // Błędy obsługuje helper, ale chcemy uniknąć unhandled rejection.
+    } finally {
       setIsLoading(false);
-
-      if (err instanceof ApiError) {
-        toast.error("Błąd wylogowania", {
-          description: err.problem.detail || err.problem.title,
-        });
-      } else {
-        toast.error("Błąd wylogowania", {
-          description: "Wystąpił nieoczekiwany błąd. Spróbuj ponownie.",
-        });
-      }
     }
   };
 

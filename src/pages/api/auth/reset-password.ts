@@ -12,7 +12,7 @@
  */
 
 import type { APIRoute } from "astro";
-import { withProblemHandling } from "@/lib/errors/http";
+import { withProblemHandling, systemErrors } from "@/lib/errors/http";
 import { fromSupabaseAuth } from "@/lib/errors/map-supabase-auth";
 import { successResponse } from "@/lib/http/http.responses";
 import { authErrors } from "@/services/auth/auth.errors";
@@ -20,6 +20,7 @@ import { validateAuthBody } from "@/lib/http/http.validate-body";
 import { ResetPasswordRequestSchema } from "@/services/auth/auth.schema";
 import { getBaseUrl } from "@/lib/http/http.base-url";
 import { createInMemoryRateLimiter, makeKeyIpEmail } from "@/lib/http/http.rate-limit";
+import { isFeatureEnabled } from "@/features";
 
 export const prerender = false;
 
@@ -27,6 +28,13 @@ export const prerender = false;
 const resetPasswordLimiter = createInMemoryRateLimiter({ windowMs: 60_000, max: 5 });
 
 export const POST: APIRoute = withProblemHandling(async ({ request, locals }) => {
+  if (!isFeatureEnabled("auth")) {
+    throw systemErrors.creators.FeatureDisabled({
+      detail: "Auth feature is disabled in this environment",
+      meta: { feature: "auth" },
+    });
+  }
+
   // Walidacja body
   const { email } = await validateAuthBody(request, ResetPasswordRequestSchema);
 

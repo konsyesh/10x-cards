@@ -19,6 +19,7 @@ interface ImportMetaEnv {
   readonly SUPABASE_KEY: string;
   readonly OPENAI_API_KEY: string;
   readonly PUBLIC_SITE_URL?: string;
+  readonly ENV_NAME?: "local" | "integration" | "prod";
   // more env variables...
 }
 

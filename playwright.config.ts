@@ -1,12 +1,31 @@
 import { defineConfig, devices } from "@playwright/test";
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "node:url";
+
+dotenv.config({ path: ".env.test" });
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const STORAGE_STATE = path.resolve(__dirname, "src/tests/e2e/auth/auth.json");
+
+const baseUse = {
+  baseURL: "http://localhost:3000",
+  trace: "on-first-retry",
+  screenshot: "only-on-failure",
+  video: "retain-on-failure",
+};
+const chromeUse = {
+  ...baseUse,
+  ...devices["Desktop Chrome"],
+};
 
 /**
  * Playwright configuration for E2E tests
- * Runs tests in Chromium, WebKit, and Firefox with visual regression support
+ * Runs only Chromium with the dedicated test server
  */
 export default defineConfig({
   testDir: "./src/tests/e2e",
-  testMatch: "**/*.e2e.ts",
 
   // Timeout settings
   timeout: 30 * 1000,
@@ -24,7 +43,7 @@ export default defineConfig({
 
   // Web server
   webServer: {
-    command: "npm run dev",
+    command: "npm run dev:e2e",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
@@ -41,34 +60,41 @@ export default defineConfig({
     ["junit", { outputFile: "test-results/junit.xml" }],
   ],
 
-  // Browser launch options
-  use: {
-    baseURL: "http://localhost:3000",
-    trace: "on-first-retry", // Trace on first failure for debugging
-    screenshot: "only-on-failure", // Screenshot on failure
-    video: "retain-on-failure", // Video on failure
-  },
+  // Browser launch options (base)
+  use: baseUse,
 
-  // Projects: Chromium + WebKit + Firefox
+  /**
+   * Projects
+   *  1. setup – runs once to create storageState
+   *  2. logged-in suites – depend on setup and reuse storageState
+   *  3. generic e2e suites (not logged-in)
+   */
   projects: [
     {
-      name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      name: "setup",
+      testMatch: "**/setup/**/*.setup.ts",
+      use: chromeUse,
+      teardown: "cleanup db",
     },
     {
-      name: "webkit",
-      use: { ...devices["Desktop Safari"] },
+      name: "cleanup db",
+      testMatch: "**/setup/**/*.teardown.ts",
+      use: chromeUse,
     },
     {
-      name: "firefox",
-      use: { ...devices["Desktop Firefox"] },
+      name: "e2e tests - logged in",
+      dependencies: ["setup"],
+      testMatch: "**/logged-in/**/*.e2e.ts",
+      use: {
+        ...chromeUse,
+        storageState: STORAGE_STATE,
+      },
     },
-
-    // Optional: Mobile testing
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
+    {
+      name: "e2e tests",
+      testMatch: "**/not-logged-in/**/*.e2e.ts",
+      use: chromeUse,
+    },
   ],
 
   // Parallel execution

@@ -81,6 +81,9 @@ const isAuthenticated = !!user;
               <a href="/generate" class="text-link">
                 Generate
               </a>
+              <a href="/flashcards" class="text-link">
+                Flashcards
+              </a>
               {user?.email && (
                 <span class="user-email" aria-label={`Zalogowany jako ${user.email}`}>
                   {user.email}

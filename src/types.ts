@@ -512,3 +512,44 @@ export interface TotalsSummary {
   rejected: number;
   edited: number;
 }
+
+/**
+ * ============================================================================
+ * FRONTEND VIEWMODELS – Typy dla komponentów React widoku Flashcards
+ * ============================================================================
+ */
+
+/** ViewModel pojedynczej fiszki na liście */
+export interface FlashcardListVM extends FlashcardDTO {
+  /** Czy fiszka jest w trakcie edycji */
+  isEditing: boolean;
+  /** Błędy walidacji pól */
+  validationErrors: {
+    front?: string;
+    back?: string;
+  };
+}
+
+/** Stan całego widoku flashcards */
+export interface FlashcardsViewState {
+  /** Lista fiszek */
+  flashcards: FlashcardListVM[];
+  /** Informacje o paginacji */
+  pagination: PaginationDTO;
+  /** Czy trwa ładowanie danych */
+  loading: boolean;
+  /** Błąd API, jeśli wystąpił */
+  error: ApiErrorResponse | null;
+  /** Aktualny tekst wyszukiwania */
+  search: string;
+  /** Pole sortowania */
+  sort: "created_at" | "updated_at" | "front";
+  /** Kierunek sortowania */
+  order: "asc" | "desc";
+  /** Wybrana fiszka dla modalu */
+  selectedFlashcard: FlashcardListVM | null;
+  /** Typ otwartego modala */
+  modalType: "create" | "edit" | "delete" | "conflict" | null;
+  /** Czy modal jest widoczny */
+  showModal: boolean;
+}

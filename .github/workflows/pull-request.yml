@@ -114,14 +114,14 @@ jobs:
           EOF
 
       - name: Run Playwright E2E tests
-        run: npm run test:e2e -- --reporter=line
+        run: npm run test:e2e
 
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: playwright-report
+          path: test-results/html
 
       - name: Upload Playwright test results
         if: always()
@@ -151,12 +151,59 @@ jobs:
         with:
           name: playwright-report
           path: playwright-report
+        continue-on-error: true
 
       - name: Extract coverage summary
         id: coverage
         if: always()
         run: |
-          node -e "const fs = require('fs'); const path = require('path'); const root = 'coverage-artifacts'; if (!fs.existsSync(root)) { console.log('coverage_line=Brak danych'); return; } const walk = (dir) => { const entries = fs.readdirSync(dir, { withFileTypes: true }); let files = []; for (const e of entries) { const p = path.join(dir, e.name); if (e.isDirectory()) files = files.concat(walk(p)); else if (e.isFile() && e.name === 'coverage-summary.json') files.push(p); } return files; }; const files = walk(root); if (!files.length) { console.log('coverage_line=Brak danych'); return; } const totals = { statements: { total: 0, covered: 0, skipped: 0 }, branches: { total: 0, covered: 0, skipped: 0 }, lines: { total: 0, covered: 0, skipped: 0 }, functions: { total: 0, covered: 0, skipped: 0 }, }; for (const file of files) { const json = JSON.parse(fs.readFileSync(file, 'utf8')); const t = json.total ?? json; for (const key of Object.keys(totals)) { const s = t[key]; if (!s) continue; totals[key].total += s.total ?? 0; totals[key].covered += s.covered ?? 0; totals[key].skipped += s.skipped ?? 0; } } const pct = (m) => m.total > 0 ? `${((m.covered / m.total) * 100).toFixed(1)}%` : 'n/a'; const line = `Coverage: Statements ${pct(totals.statements)}, Branches ${pct(totals.branches)}, Lines ${pct(totals.lines)}, Functions ${pct(totals.functions)}`; fs.appendFileSync(process.env.GITHUB_OUTPUT, `coverage_line=${line}\n`);"
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const root = 'coverage-artifacts';
+          if (!fs.existsSync(root)) {
+            console.log('coverage_line=Brak danych');
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, 'coverage_line=Brak danych\n');
+            process.exit(0);
+          }
+          const walk = (dir) => {
+            const entries = fs.readdirSync(dir, { withFileTypes: true });
+            let files = [];
+            for (const e of entries) {
+              const p = path.join(dir, e.name);
+              if (e.isDirectory()) files = files.concat(walk(p));
+              else if (e.isFile() && e.name === 'coverage-summary.json') files.push(p);
+            }
+            return files;
+          };
+          const files = walk(root);
+          if (!files.length) {
+            console.log('coverage_line=Brak danych');
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, 'coverage_line=Brak danych\n');
+            process.exit(0);
+          }
+          const totals = {
+            statements: { total: 0, covered: 0, skipped: 0 },
+            branches: { total: 0, covered: 0, skipped: 0 },
+            lines: { total: 0, covered: 0, skipped: 0 },
+            functions: { total: 0, covered: 0, skipped: 0 },
+          };
+          for (const file of files) {
+            const json = JSON.parse(fs.readFileSync(file, 'utf8'));
+            const t = json.total ?? json;
+            for (const key of Object.keys(totals)) {
+              const s = t[key];
+              if (!s) continue;
+              totals[key].total += s.total ?? 0;
+              totals[key].covered += s.covered ?? 0;
+              totals[key].skipped += s.skipped ?? 0;
+            }
+          }
+          const pct = (m) => (m.total > 0 ? `${((m.covered / m.total) * 100).toFixed(1)}%` : 'n/a');
+          const line = `Coverage: Statements ${pct(totals.statements)}, Branches ${pct(totals.branches)}, Lines ${pct(totals.lines)}, Functions ${pct(totals.functions)}`;
+          console.log(line);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `coverage_line=${line}\n`);
+          NODE
 
       - name: Post PR status comment
         if: always()

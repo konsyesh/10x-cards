@@ -1,25 +1,30 @@
 # Feature Flags Rules
 
 ## Key Principles
+
 - Use `isFeatureEnabled(feature)` to check feature status
 - Never access `ENV_NAME` directly - always use feature flags API
 - Features separate deployment from release
 
 ## API Behavior
+
 - Disabled features return `system/feature-disabled` (403) in API
 - Use `systemErrors.creators.FeatureDisabled()` for consistent error handling
 
 ## Frontend Behavior
+
 - Astro pages: redirect to `/` when feature disabled
 - React components: use `FeatureGate` for UI fragments
 - Navigation: conditionally show links based on `isFeatureEnabled()`
 
 ## Adding New Features
+
 - Update `FeatureName` type in `src/features/index.ts`
-- Add configuration for all environments (local, integration, prod)
+- Add configuration for all environments (local, integration, production)
 - Apply gating in API endpoints, pages, and UI components
 
 ## Current Features
+
 - `auth`: authentication endpoints and pages
 - `generations`: flashcard generation functionality
 - `flashcards`: flashcard management and viewing

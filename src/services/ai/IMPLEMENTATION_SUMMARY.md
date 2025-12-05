@@ -27,7 +27,7 @@ Kompletna implementacja serwisu AIService dla generowania ustrukturyzowanych odp
 
 ### 3. **Konfiguracja** (`ai.service.config.ts`)
 
-- ✅ 6 predefiniowanych konfiguracji (dev, prod, test, high-perf, creative, reliable)
+- ✅ 6 predefiniowanych konfiguracji (dev, production, test, high-perf, creative, reliable)
 - ✅ `AIServicePresets` - szybkie factory dla use-case'ów
 - ✅ `createAIService()` - auto-detect environment
 - ✅ `loadLogger()` - załaduj logger z env

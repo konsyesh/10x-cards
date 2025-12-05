@@ -18,7 +18,7 @@ Aktualnie zarządzane są trzy funkcjonalności:
 
 ### Typy
 
-- `EnvironmentName = "local" | "integration" | "prod"`
+- `EnvironmentName = "local" | "integration" | "production"`
 - `FeatureName = "generations" | "auth" | "flashcards"`
 - `FeatureConfig = Record<EnvironmentName, Record<FeatureName, boolean>>`
 
@@ -38,7 +38,7 @@ const featureFlags: FeatureConfig = {
     flashcards: true,
     generations: true,
   },
-  prod: {
+  production: {
     auth: false,
     flashcards: false,
     generations: false,
@@ -52,20 +52,20 @@ const featureFlags: FeatureConfig = {
 - Typ w `src/env.d.ts`:
 
   ```ts
-  readonly ENV_NAME?: "local" | "integration" | "prod";
+  readonly ENV_NAME?: "local" | "integration" | "production";
   ```
 
 - Jeżeli `ENV_NAME` jest:
-  - **nieustawione** lub ma **niepoprawną** wartość → używany jest domyślnie `"prod"`.
+  - **nieustawione** lub ma **niepoprawną** wartość → używany jest domyślnie `"production"`.
 
 ### Publiczne API modułu
 
 ```ts
-export const ENVIRONMENTS = ["local", "integration", "prod"] as const;
+export const ENVIRONMENTS = ["local", "integration", "production"] as const;
 export type EnvironmentName = (typeof ENVIRONMENTS)[number];
 export type FeatureName = "generations" | "auth" | "flashcards";
 
-export const currentEnv: EnvironmentName; // wyliczane z ENV_NAME, fallback "prod"
+export const currentEnv: EnvironmentName; // wyliczane z ENV_NAME, fallback "production"
 
 export const isFeatureEnabled = (
   feature: FeatureName,
@@ -301,12 +301,8 @@ function SomeContainer() {
   ```ts
   const navigationLinks: NavigationLink[] = [
     { label: "Home", path: "/" },
-    ...(isFeatureEnabled("generations")
-      ? [{ label: "Generuj", path: "/generate" } as NavigationLink]
-      : []),
-    ...(isFeatureEnabled("flashcards")
-      ? [{ label: "Fiszki", path: "/flashcards" } as NavigationLink]
-      : []),
+    ...(isFeatureEnabled("generations") ? [{ label: "Generuj", path: "/generate" } as NavigationLink] : []),
+    ...(isFeatureEnabled("flashcards") ? [{ label: "Fiszki", path: "/flashcards" } as NavigationLink] : []),
   ];
   ```
 
@@ -334,6 +330,7 @@ function SomeContainer() {
 
 3. **Jeśli dotyczy strony `.astro`**:
    - Na początku pliku `.astro` dodaj:
+
      ```ts
      import { isFeatureEnabled } from "@/features";
 
@@ -345,9 +342,7 @@ function SomeContainer() {
 4. **Jeśli dotyczy fragmentu UI (React)**:
    - owiej fragment w `FeatureGate`:
      ```tsx
-     <FeatureGate feature="<feature-name>">
-       {/* komponenty */}
-     </FeatureGate>
+     <FeatureGate feature="<feature-name>">{/* komponenty */}</FeatureGate>
      ```
 
 5. **Jeśli dotyczy nawigacji lub linków**:
@@ -357,7 +352,7 @@ function SomeContainer() {
 
 ## Podsumowanie
 
-- Źródłem prawdy o środowisku jest `ENV_NAME` → mapowane do `EnvironmentName` z fallbackiem na `"prod"`.
+- Źródłem prawdy o środowisku jest `ENV_NAME` → mapowane do `EnvironmentName` z fallbackiem na `"production"`.
 - Logika flag jest scentralizowana w `src/features/index.ts` i używana przez:
   - API – przez `isFeatureEnabled(...)` + `systemErrors.creators.FeatureDisabled(...)`,
   - strony `.astro` – przez `isFeatureEnabled(...)` + `Astro.redirect("/")`,
@@ -366,4 +361,3 @@ function SomeContainer() {
   - można wdrażać kod z wyłączonymi feature’ami,
   - kontrolować dostępność funkcji per środowisko,
   - zachować spójne zachowanie (403 w API, redirect na front-endzie, ukrywanie elementów UI).
-

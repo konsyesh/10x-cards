@@ -145,14 +145,6 @@ jobs:
           path: coverage-artifacts
           merge-multiple: true
 
-      - name: Download Playwright report
-        if: always()
-        uses: actions/download-artifact@v4
-        with:
-          name: playwright-report
-          path: playwright-report
-        continue-on-error: true
-
       - name: Extract coverage summary
         id: coverage
         if: always()

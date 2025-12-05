@@ -1,4 +1,4 @@
-export const ENVIRONMENTS = ["local", "integration", "prod"] as const;
+export const ENVIRONMENTS = ["local", "integration", "production"] as const;
 
 export type EnvironmentName = (typeof ENVIRONMENTS)[number];
 
@@ -6,7 +6,7 @@ export type FeatureName = "generations" | "auth" | "flashcards";
 
 export type FeatureConfig = Record<EnvironmentName, Record<FeatureName, boolean>>;
 
-const DEFAULT_ENV: EnvironmentName = "prod";
+const DEFAULT_ENV: EnvironmentName = "production";
 
 const featureFlags: FeatureConfig = {
   local: {
@@ -19,7 +19,7 @@ const featureFlags: FeatureConfig = {
     flashcards: true,
     generations: true,
   },
-  prod: {
+  production: {
     auth: true,
     flashcards: true,
     generations: true,
@@ -29,7 +29,7 @@ const featureFlags: FeatureConfig = {
 const resolveEnvName = (): EnvironmentName => {
   const value = (import.meta.env?.ENV_NAME as string | undefined) ?? DEFAULT_ENV;
 
-  if (value === "local" || value === "integration" || value === "prod") {
+  if (value === "local" || value === "integration" || value === "production") {
     return value;
   }
 

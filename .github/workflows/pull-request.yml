@@ -32,7 +32,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: ["1/2", "2/2"]
+        include:
+          - shard: "1/2"
+            shard_name: "shard-1-of-2"
+          - shard: "2/2"
+            shard_name: "shard-2-of-2"
+    env:
+      NODE_ENV: test
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -48,47 +54,133 @@ jobs:
         run: npm ci
 
       - name: Run Vitest (shard ${{ matrix.shard }})
-        run: npm test -- --run --shard=${{ matrix.shard }}
+        run: npm run test:coverage -- --run --shard=${{ matrix.shard }}
+
+      - name: Upload unit test coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-unit-${{ matrix.shard_name }}
+          path: coverage
+
+  e2e-tests:
+    name: E2E tests
+    runs-on: ubuntu-latest
+    needs: [lint]
+    environment: integration
+    env:
+      NODE_ENV: test
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      E2E_USERNAME_ID: ${{ secrets.E2E_USERNAME_ID }}
+      E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
+      E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+      SEED_USER_EMAIL: test@example.com
+      SEED_USER_PASSWORD: secretpASS
+      PUBLIC_SITE_URL: http://localhost:3000
+      ENV_NAME: integration
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Create .env.test for Playwright
+        run: |
+          cat <<'EOF' > .env.test
+          SUPABASE_URL=${SUPABASE_URL}
+          SUPABASE_KEY=${SUPABASE_KEY}
+          OPENAI_API_KEY=
+          OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+          SEED_USER_EMAIL=${SEED_USER_EMAIL}
+          SEED_USER_PASSWORD=${SEED_USER_PASSWORD}
+          PUBLIC_SITE_URL=${PUBLIC_SITE_URL}
+          ENV_NAME=${ENV_NAME}
+          E2E_USERNAME_ID=${E2E_USERNAME_ID}
+          E2E_USERNAME=${E2E_USERNAME}
+          E2E_PASSWORD=${E2E_PASSWORD}
+          EOF
+
+      - name: Run Playwright E2E tests
+        run: npm run test:e2e -- --reporter=line
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report
+
+      - name: Upload Playwright test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results
+          path: test-results
 
   status-comment:
     name: Status Comment
     runs-on: ubuntu-latest
-    needs: [lint, unit-tests]
-    if: ${{ success() }}
+    needs: [lint, unit-tests, e2e-tests]
     permissions:
       pull-requests: write
     steps:
-      - name: Add PR status comment
+      - name: Download unit coverage artifacts
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-unit-*
+          path: coverage-artifacts
+          merge-multiple: true
+
+      - name: Download Playwright report
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report
+
+      - name: Extract coverage summary
+        id: coverage
+        if: always()
+        run: |
+          node -e "const fs = require('fs'); const path = require('path'); const root = 'coverage-artifacts'; if (!fs.existsSync(root)) { console.log('coverage_line=Brak danych'); return; } const walk = (dir) => { const entries = fs.readdirSync(dir, { withFileTypes: true }); let files = []; for (const e of entries) { const p = path.join(dir, e.name); if (e.isDirectory()) files = files.concat(walk(p)); else if (e.isFile() && e.name === 'coverage-summary.json') files.push(p); } return files; }; const files = walk(root); if (!files.length) { console.log('coverage_line=Brak danych'); return; } const totals = { statements: { total: 0, covered: 0, skipped: 0 }, branches: { total: 0, covered: 0, skipped: 0 }, lines: { total: 0, covered: 0, skipped: 0 }, functions: { total: 0, covered: 0, skipped: 0 }, }; for (const file of files) { const json = JSON.parse(fs.readFileSync(file, 'utf8')); const t = json.total ?? json; for (const key of Object.keys(totals)) { const s = t[key]; if (!s) continue; totals[key].total += s.total ?? 0; totals[key].covered += s.covered ?? 0; totals[key].skipped += s.skipped ?? 0; } } const pct = (m) => m.total > 0 ? `${((m.covered / m.total) * 100).toFixed(1)}%` : 'n/a'; const line = `Coverage: Statements ${pct(totals.statements)}, Branches ${pct(totals.branches)}, Lines ${pct(totals.lines)}, Functions ${pct(totals.functions)}`; fs.appendFileSync(process.env.GITHUB_OUTPUT, `coverage_line=${line}\n`);"
+
+      - name: Post PR status comment
+        if: always()
         uses: actions/github-script@v7
         with:
           script: |
-            const body = [
-              `✅ CI passed for this PR`,
-              `- Lint: success`,
-              `- Unit tests: success (2 shards)`,
-              `\nRun: https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
-            ].join('\n');
-            // Find existing bot comment to update (idempotent)
-            const { data: comments } = await github.rest.issues.listComments({
+            const lintStatus = '${{ needs.lint.result }}' === 'success' ? '✅' : '❌';
+            const unitStatus = '${{ needs.unit-tests.result }}' === 'success' ? '✅' : '❌';
+            const e2eStatus = '${{ needs.e2e-tests.result }}' === 'success' ? '✅' : '❌';
+            const allOk = lintStatus === '✅' && unitStatus === '✅' && e2eStatus === '✅';
+            const coverageLine = `${{ steps.coverage.outputs.coverage_line || 'Coverage: Brak danych' }}`;
+            const lines = [
+              allOk ? '✅ CI checks passed' : '❌ CI checks did not pass',
+              `- Lint: ${lintStatus}`,
+              `- Unit: ${unitStatus}`,
+              `- E2E: ${e2eStatus}`,
+              coverageLine,
+              '',
+              `Run: https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              `Artifacts: coverage-unit-*, playwright-report`,
+            ];
+            await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.payload.pull_request.number,
+              body: lines.join('\n'),
             });
-            const marker = '<!-- pr-status-summary -->';
-            const existing = comments.find(c => c.user.type === 'Bot' && c.body && c.body.includes(marker));
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existing.id,
-                body: `${marker}\n${body}`,
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.payload.pull_request.number,
-                body: `${marker}\n${body}`,
-              });
-            }
-

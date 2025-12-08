@@ -118,11 +118,20 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return redirect(`/auth/login?redirectTo=${redirectTo}`, 302);
   }
 
-  // Wykonaj middleware chain
-  const response = await next();
+  // // Wykonaj middleware chain
+  // const response = await next();
 
-  // Dodaj X-Request-ID do response headers
-  response.headers.set("x-request-id", reqId);
+  // // Dodaj X-Request-ID do response headers
+  // response.headers.set("x-request-id", reqId);
 
-  return response;
+  // return response;
+  try {
+    const response = await next();
+    console.log("RES", pathname, response.status, response.headers.get("content-type"));
+    response.headers.set("x-request-id", reqId);
+    return response;
+  } catch (err) {
+    console.error("MW error", pathname, err);
+    return new Response("Internal error", { status: 500 });
+  }
 });

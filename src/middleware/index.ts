@@ -125,13 +125,16 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // response.headers.set("x-request-id", reqId);
 
   // return response;
+  const response = await next();
+
   try {
-    const response = await next();
-    console.log("RES", pathname, response.status, response.headers.get("content-type"));
-    response.headers.set("x-request-id", reqId);
-    return response;
+    const cloned = response.clone();
+    const body = await cloned.text();
+    console.log("RES", pathname, response.status, response.headers.get("content-type"), body.slice(0, 200));
   } catch (err) {
-    console.error("MW error", pathname, err);
-    return new Response("Internal error", { status: 500 });
+    console.error("RES read error", pathname, err);
   }
+
+  response.headers.set("x-request-id", reqId);
+  return response;
 });

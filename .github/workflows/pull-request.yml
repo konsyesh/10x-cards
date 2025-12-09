@@ -9,6 +9,12 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
+      - name: Skip CI by label
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'skip-ci') }}
+        run: |
+          echo "skip-ci label present -> skipping lint"
+          exit 0
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -40,6 +46,12 @@ jobs:
     env:
       NODE_ENV: test
     steps:
+      - name: Skip CI by label
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'skip-ci') }}
+        run: |
+          echo "skip-ci label present -> skipping unit tests"
+          exit 0
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -81,6 +93,12 @@ jobs:
       PUBLIC_SITE_URL: http://localhost:3000
       ENV_NAME: integration
     steps:
+      - name: Skip CI by label
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'skip-ci') }}
+        run: |
+          echo "skip-ci label present -> skipping e2e"
+          exit 0
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -137,6 +155,12 @@ jobs:
     permissions:
       pull-requests: write
     steps:
+      - name: Skip CI by label
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'skip-ci') }}
+        run: |
+          echo "skip-ci label present -> skipping status comment"
+          exit 0
+
       - name: Download unit coverage artifacts
         if: always()
         uses: actions/download-artifact@v4

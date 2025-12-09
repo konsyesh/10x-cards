@@ -131,7 +131,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   try {
     const cloned = response.clone();
     const body = await cloned.text();
-    console.log("RES", pathname, response.status, response.headers, body);
+    console.log("RES", pathname, response.status, response.headers, body.slice(0, 200));
   } catch (err) {
     console.error("RES read error", pathname, err);
   }

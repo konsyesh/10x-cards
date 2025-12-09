@@ -8,8 +8,13 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-ci') }}
     steps:
+      - name: Skip CI by label
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'skip-ci') }}
+        run: |
+          echo "skip-ci label present -> skipping lint"
+          exit 0
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -30,7 +35,6 @@ jobs:
     name: Unit tests (shard ${{ matrix.shard }})
     runs-on: ubuntu-latest
     needs: [lint]
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-ci') }}
     strategy:
       fail-fast: false
       matrix:
@@ -42,6 +46,12 @@ jobs:
     env:
       NODE_ENV: test
     steps:
+      - name: Skip CI by label
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'skip-ci') }}
+        run: |
+          echo "skip-ci label present -> skipping unit tests"
+          exit 0
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -69,7 +79,6 @@ jobs:
     name: E2E tests
     runs-on: ubuntu-latest
     needs: [lint]
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-ci') }}
     environment: integration
     env:
       NODE_ENV: test
@@ -84,6 +93,12 @@ jobs:
       PUBLIC_SITE_URL: http://localhost:3000
       ENV_NAME: integration
     steps:
+      - name: Skip CI by label
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'skip-ci') }}
+        run: |
+          echo "skip-ci label present -> skipping e2e"
+          exit 0
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -137,10 +152,15 @@ jobs:
     name: Status Comment
     runs-on: ubuntu-latest
     needs: [lint, unit-tests, e2e-tests]
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-ci') }}
     permissions:
       pull-requests: write
     steps:
+      - name: Skip CI by label
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'skip-ci') }}
+        run: |
+          echo "skip-ci label present -> skipping status comment"
+          exit 0
+
       - name: Download unit coverage artifacts
         if: always()
         uses: actions/download-artifact@v4

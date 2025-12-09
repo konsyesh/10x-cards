@@ -9,3 +9,7 @@ directory = "./dist"
 
 [observability]
 enabled = true
+
+[[kv_namespaces]]
+binding = "SESSION"
+id = "75fe7ccd99f44ddeb6f246a78aa4210f"

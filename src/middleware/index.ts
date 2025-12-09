@@ -48,6 +48,7 @@ const isStaticAsset = (pathname: string): boolean => {
 export const onRequest = defineMiddleware(async (context, next) => {
   const { url, request, cookies, redirect, locals } = context;
   const pathname = url.pathname;
+  console.log("MW", pathname);
 
   // Generuj lub odczytaj X-Request-ID
   const reqId = requestId(request.headers);
